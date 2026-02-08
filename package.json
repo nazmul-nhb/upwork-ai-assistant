@@ -1,0 +1,19 @@
+{
+	"name": "upwork-ai-assistant",
+	"private": true,
+	"version": "0.0.1",
+	"type": "module",
+	"scripts": {
+		"dev": "vite",
+		"build": "vite build",
+		"preview": "vite preview",
+		"commit": "nhb-commit"
+	},
+	"devDependencies": {
+		"@crxjs/vite-plugin": "^2.1.0",
+		"@types/chrome": "^0.1.31",
+		"nhb-scripts": "^1.9.2",
+		"typescript": "^5.5.0",
+		"vite": "^5.4.0"
+	}
+}

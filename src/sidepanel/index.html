@@ -1,0 +1,50 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Upwork AI Assistant</title>
+    <link rel="stylesheet" href="./sidepanel.css" />
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="row">
+        <div>
+          <div class="title">Upwork AI Assistant</div>
+          <div class="muted" id="jobTitle">No job detected yet.</div>
+        </div>
+        <a class="link" href="../options/index.html" target="_blank" rel="noreferrer">Settings</a>
+      </header>
+
+      <section class="card">
+        <div class="row">
+          <button id="btnRefresh" class="btn">Refresh job</button>
+          <button id="btnAnalyze" class="btn primary">Analyze</button>
+        </div>
+
+        <div class="field">
+          <label>Passphrase (to decrypt key)</label>
+          <input id="passphrase" type="password" placeholder="Your passphrase" />
+          <div class="muted small">Not stored by default.</div>
+        </div>
+
+        <div class="field">
+          <label>Job preview</label>
+          <pre id="jobPreview" class="pre"></pre>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="row">
+          <div class="subtitle">Result</div>
+          <button id="btnCopyShort" class="btn">Copy short</button>
+          <button id="btnCopyFull" class="btn">Copy full</button>
+        </div>
+
+        <div id="result" class="result muted">Run Analyze to see output.</div>
+      </section>
+    </div>
+
+    <script type="module" src="./sidepanel.ts"></script>
+  </body>
+</html>
