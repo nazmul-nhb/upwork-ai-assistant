@@ -1,15 +1,16 @@
 // @ts-check
 
-import { defineScriptConfig, expressMongooseZodTemplate } from 'nhb-scripts';
+import { defineScriptConfig } from 'nhb-scripts';
 
 export default defineScriptConfig({
 	format: {
 		args: ['--write'],
-		files: ['.'],
+		files: ['src', 'eslint.config.mjs', 'nhb.scripts.config.mjs', 'manifest.config.ts'],
 		ignorePath: '.prettierignore',
 	},
+	lint: { folders: ['src', 'eslint.config.mjs', 'manifest.config.ts'] },
 	commit: {
-		runFormatter: false,
+		runFormatter: true,
 		emojiBeforePrefix: true,
 		wrapPrefixWith: '`',
 		commitTypes: {
@@ -18,6 +19,6 @@ export default defineScriptConfig({
 	},
 	count: {
 		defaultPath: '.',
-		excludePaths: ['node_modules', 'dist', 'build'],
+		excludePaths: ['node_modules', 'dist', 'release'],
 	},
 });

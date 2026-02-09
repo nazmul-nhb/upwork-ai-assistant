@@ -15,6 +15,7 @@ export default [
 			'node_modules/*',
 			'dist/*',
 			'coverage/*',
+			'release/*',
 			'**/*.test.ts',
 			'**/__tests__/**/*',
 		],
@@ -44,7 +45,7 @@ export default [
 			'no-unused-expressions': 'error',
 			'prefer-const': 'warn',
 			// 'no-console': ['warn', { allow: ['info', 'warn', 'error', 'table'] }],
-			// 'no-undef': 'error',
+			'no-undef': 'off',
 			'@typescript-eslint/no-empty-object-type': 'off',
 			'@typescript-eslint/no-unused-expressions': 'error',
 			'@typescript-eslint/consistent-type-imports': ['warn', { prefer: 'type-imports' }],
@@ -83,18 +84,18 @@ export default [
 		files: ['src/**/*types.ts', 'src/**/*interfaces.ts'],
 		rules: { 'no-unused-vars': 'off' },
 	},
-	{
-		files: ['src/classes/**/*.ts', 'src/**/*types.ts', 'src/**/types/*.ts'],
-		rules: { '@typescript-eslint/no-explicit-any': 'off' },
-	},
+	// {
+	// 	files: ['src/classes/**/*.ts', 'src/**/*types.ts', 'src/**/types/*.ts'],
+	// 	rules: { '@typescript-eslint/no-explicit-any': 'off' },
+	// },
 	{
 		files: ['**/*.js', '**/*.cjs'],
 		rules: { '@typescript-eslint/no-require-imports': 'off' },
 	},
-	{
-		files: ['**/*plugins.ts', '**/plugins/*.ts'],
-		rules: { '@typescript-eslint/consistent-type-imports': 'off' },
-	},
+	// {
+	// 	files: ['**/*plugins.ts', '**/plugins/*.ts'],
+	// 	rules: { '@typescript-eslint/consistent-type-imports': 'off' },
+	// },
 	{
 		files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'],
 		rules: {
