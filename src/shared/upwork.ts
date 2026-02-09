@@ -237,7 +237,7 @@ function extractConnects(container: HTMLElement | null) {
 	let connectsAvailable = '';
 	if (container) {
 		const text = container.innerText;
-		const reqMatch = text.match(/Required Connects.*?:\s*(\d+)/i);
+		const reqMatch = text.match(/Send a proposal for|Required Connects.*?:\s*(\d+)/i);
 		if (reqMatch) connectsRequired = reqMatch[1];
 		const availMatch = text.match(/Available Connects:\s*(\d+)/i);
 		if (availMatch) connectsAvailable = availMatch[1];
