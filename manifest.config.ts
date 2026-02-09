@@ -6,13 +6,14 @@ export default defineManifest({
 	name: 'Upwork AI Assistant',
 	description: pkg.description,
 	version: pkg.version,
+	author: pkg.author,
 	icons: {
-		48: 'public/logo.png',
+		48: 'public/icon.png',
 	},
 	action: {
 		default_title: 'Upwork AI Assistant',
 		default_icon: {
-			48: 'public/logo.png',
+			48: 'public/icon.png',
 		},
 		default_popup: 'src/popup/index.html',
 	},
@@ -20,7 +21,7 @@ export default defineManifest({
 		page: 'src/options/index.html',
 		open_in_tab: true,
 	},
-	permissions: ['storage', 'tabs', 'sidePanel', 'scripting'],
+	permissions: ['storage', 'tabs', 'activeTab', 'sidePanel', 'scripting'],
 	host_permissions: [
 		'https://www.upwork.com/*',
 		'https://api.openai.com/*',
