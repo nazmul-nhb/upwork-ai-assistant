@@ -5,6 +5,7 @@ import {
 	isObjectWithKeys,
 	isPositiveInteger,
 	isString,
+	isValidArray,
 } from 'nhb-toolbox';
 import type { LlmProvider } from './types';
 
@@ -121,7 +122,7 @@ async function callGemini(request: LlmRequest): Promise<string> {
 
 	const data = (await response.json()) as Record<string, unknown>;
 	const candidates = data.candidates;
-	if (!Array.isArray(candidates) || candidates.length === 0) {
+	if (!isValidArray<Record<string, unknown>>(candidates)) {
 		throw new LlmProviderError({
 			provider: 'gemini',
 			message: 'Gemini returned no candidates.',
@@ -129,7 +130,7 @@ async function callGemini(request: LlmRequest): Promise<string> {
 		});
 	}
 
-	const first = candidates[0] as Record<string, unknown>;
+	const first = candidates[0];
 	const finishReason = first.finishReason;
 	if (finishReason === 'MAX_TOKENS') {
 		throw new LlmProviderError({

@@ -5,10 +5,16 @@ import { defineScriptConfig } from 'nhb-scripts';
 export default defineScriptConfig({
 	format: {
 		args: ['--write'],
-		files: ['src', 'eslint.config.mjs', 'nhb.scripts.config.mjs', 'manifest.config.ts'],
+		files: [
+			'src',
+			'eslint.config.mjs',
+			'nhb.scripts.config.mjs',
+			'manifest.config.ts',
+			'vite.config.ts',
+		],
 		ignorePath: '.prettierignore',
 	},
-	lint: { folders: ['src', 'eslint.config.mjs', 'manifest.config.ts'] },
+	lint: { folders: ['src', 'eslint.config.mjs', 'manifest.config.ts', 'vite.config.ts'] },
 	commit: {
 		runFormatter: true,
 		emojiBeforePrefix: true,

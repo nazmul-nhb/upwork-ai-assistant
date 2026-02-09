@@ -329,21 +329,20 @@ function coerceAnalysis(value: unknown): AnalysisResult {
 		throw new Error('Invalid AI output format.');
 	}
 
-	const object = value as Record<string, unknown>;
-	const shouldApply = asBoolean(object.shouldApply, 'shouldApply');
-	const fitScore = clampNumber(asNumber(object.fitScore, 'fitScore'), 0, 100);
+	const shouldApply = asBoolean(value.shouldApply, 'shouldApply');
+	const fitScore = clampNumber(asNumber(value.fitScore, 'fitScore'), 0, 100);
 
 	return {
 		shouldApply,
 		fitScore,
-		keyReasons: asStringArray(object.keyReasons, 'keyReasons'),
-		risks: asStringArray(object.risks, 'risks'),
-		questionsToAsk: asStringArray(object.questionsToAsk, 'questionsToAsk'),
-		proposalShort: asString(object.proposalShort, 'proposalShort'),
-		proposalFull: asString(object.proposalFull, 'proposalFull'),
+		keyReasons: asStringArray(value.keyReasons, 'keyReasons'),
+		risks: asStringArray(value.risks, 'risks'),
+		questionsToAsk: asStringArray(value.questionsToAsk, 'questionsToAsk'),
+		proposalShort: asString(value.proposalShort, 'proposalShort'),
+		proposalFull: asString(value.proposalFull, 'proposalFull'),
 		bidSuggestion:
-			isString(object.bidSuggestion) && object.bidSuggestion.trim() ?
-				object.bidSuggestion
+			isString(value.bidSuggestion) && value.bidSuggestion.trim() ?
+				value.bidSuggestion
 			:	undefined,
 	};
 }
@@ -414,7 +413,8 @@ async function extractJobViaScripting(tabId: number): Promise<UpworkJob | null> 
  * variables — Chrome serialises the function body and runs it in isolation.
  */
 function extractJobFromPageDOM() {
-	const norm = (v: string) => v.replace(/\s+/g, ' ').trim();
+	const norm = (v: string, keepNewLine = false) =>
+		keepNewLine ? v.replace(/[ \t]+/g, ' ').trim() : v.replace(/\s+/g, ' ').trim();
 
 	const nuxtField = (field: string): string => {
 		try {
@@ -499,13 +499,13 @@ function extractJobFromPageDOM() {
 		]) {
 			const el = (content ?? document).querySelector(sel) as HTMLElement | null;
 			if (el) {
-				const t = norm(el.innerText);
+				const t = norm(el.innerText, true);
 				if (t.length > 20) return t;
 			}
 		}
 		if (content) {
 			const sec = content.querySelector('section') as HTMLElement | null;
-			return norm(sec ? sec.innerText : content.innerText);
+			return norm(sec ? sec.innerText : content.innerText, true);
 		}
 		return '';
 	};
@@ -836,6 +836,6 @@ function extractJobFromPageDOM() {
 		bidRange: bidRange || undefined,
 		connectsRequired: connectsRequired || undefined,
 		connectsAvailable: connectsAvailable || undefined,
-		...(client as Record<string, unknown>),
+		...client,
 	};
 }

@@ -25,6 +25,7 @@ export default function SidePanel() {
 	const [result, setResult] = useState<AnalysisResult | null>(null);
 
 	const [passphrase, setPassphrase] = useState('');
+	const [rememberPassphrase, setRememberPassphrase] = useState(false);
 	const [status, setStatus] = useState('Loading...');
 	const [errorDetails, setErrorDetails] = useState<ErrorDetails | null>(null);
 	const [busy, setBusy] = useState(false);
@@ -53,6 +54,19 @@ export default function SidePanel() {
 			if (res.type !== 'SETTINGS') return;
 
 			setSettings(res.settings);
+			setRememberPassphrase(res.settings.rememberPassphrase);
+
+			// Restore passphrase from session if remembered
+			if (res.settings.rememberPassphrase) {
+				try {
+					const session = await chrome.storage.session.get('sessionPassphrase');
+					if (session.sessionPassphrase) {
+						setPassphrase(session.sessionPassphrase as string);
+					}
+				} catch {
+					// session storage may not be available
+				}
+			}
 
 			const config = res.settings.providers[res.settings.activeProvider];
 			if (!config.apiKeyEncrypted) {
@@ -130,6 +144,11 @@ export default function SidePanel() {
 			setResult(response.result);
 			setStatus('Analysis complete.');
 			setErrorDetails(null);
+
+			// Persist passphrase for session if remembered
+			if (rememberPassphrase) {
+				void chrome.storage.session.set({ sessionPassphrase: passphrase.trim() });
+			}
 		} catch (error) {
 			setResult(null);
 			setStatus(error instanceof Error ? error.message : 'Analysis failed.');
@@ -195,6 +214,37 @@ export default function SidePanel() {
 						placeholder="To decrypt your API key"
 					/>
 				</label>
+
+				<div className="side-checkbox">
+					<input
+						type="checkbox"
+						name="rememberPass"
+						id="rememberPass"
+						checked={rememberPassphrase}
+						onChange={(e) => {
+							const checked = e.target.checked;
+							setRememberPassphrase(checked);
+
+							if (settings) {
+								const updated = { ...settings, rememberPassphrase: checked };
+								setSettings(updated);
+								void chrome.runtime.sendMessage({
+									type: 'SET_SETTINGS',
+									settings: updated,
+								} satisfies BgRequest);
+							}
+
+							if (!checked) {
+								void chrome.storage.session.remove('sessionPassphrase');
+							} else if (passphrase.trim()) {
+								void chrome.storage.session.set({
+									sessionPassphrase: passphrase.trim(),
+								});
+							}
+						}}
+					/>
+					<label htmlFor="rememberPass">Remember for this session</label>
+				</div>
 
 				<div className="side-row">
 					<button disabled={busy} onClick={() => void refreshJob()}>

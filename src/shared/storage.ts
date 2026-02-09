@@ -1,4 +1,11 @@
-import { isArrayOfType, isBoolean, isObject, isString } from 'nhb-toolbox';
+import {
+	isArrayOfType,
+	isBoolean,
+	isNumber,
+	isObject,
+	isString,
+	isUndefined,
+} from 'nhb-toolbox';
 import type { ExtensionSettings, LlmProvider, ProviderConfig, UserMindset } from './types';
 
 const KEY = 'UPWORK_AI_ASSISTANT_SETTINGS_V2';
@@ -6,7 +13,7 @@ const PROVIDERS: LlmProvider[] = ['openai', 'gemini', 'grok'];
 
 export async function loadSettings(): Promise<ExtensionSettings | null> {
 	const data = await chrome.storage.local.get(KEY);
-	const raw = data[KEY] as unknown;
+	const raw = data[KEY];
 	return isSettings(raw) ? raw : null;
 }
 
@@ -16,39 +23,35 @@ export async function saveSettings(settings: ExtensionSettings): Promise<void> {
 
 function isProviderConfig(value: unknown): value is ProviderConfig {
 	if (!isObject(value)) return false;
-	const config = value as Record<string, unknown>;
 
-	if (!isString(config.model)) return false;
+	if (!isString(value.model)) return false;
 
 	// Optional fields — accept correct type OR undefined
-	if (config.apiKeyEncrypted !== undefined && !isString(config.apiKeyEncrypted)) return false;
-	if (config.baseUrl !== undefined && !isString(config.baseUrl)) return false;
-	if (config.temperature !== undefined && typeof config.temperature !== 'number')
-		return false;
-	if (config.maxOutputTokens !== undefined && typeof config.maxOutputTokens !== 'number')
-		return false;
+	if (!isUndefined(value.apiKeyEncrypted) && !isString(value.apiKeyEncrypted)) return false;
+	if (!isUndefined(value.baseUrl) && !isString(value.baseUrl)) return false;
+	if (!isUndefined(value.temperature) && !isNumber(value.temperature)) return false;
+	if (!isUndefined(value.maxOutputTokens) && !isNumber(value.maxOutputTokens)) return false;
 
 	return true;
 }
 
 function isMindset(value: unknown): value is UserMindset {
 	if (!isObject(value)) return false;
-	const m = value as Record<string, unknown>;
 
 	return (
-		isString(m.profileName) &&
-		isString(m.roleTitle) &&
-		isArrayOfType(m.coreSkills, isString) &&
-		isArrayOfType(m.secondarySkills, isString) &&
-		isArrayOfType(m.noGoSkills, isString) &&
-		isArrayOfType(m.proposalStyleRules, isString) &&
-		isArrayOfType(m.redFlags, isString)
+		isString(value.profileName) &&
+		isString(value.roleTitle) &&
+		isArrayOfType(value.coreSkills, isString) &&
+		isArrayOfType(value.secondarySkills, isString) &&
+		isArrayOfType(value.noGoSkills, isString) &&
+		isArrayOfType(value.proposalStyleRules, isString) &&
+		isArrayOfType(value.redFlags, isString)
 	);
 }
 
 function isSettings(value: unknown): value is ExtensionSettings {
 	if (!isObject(value)) return false;
-	const obj = value as Record<string, unknown>;
+	const obj = value;
 
 	if (!PROVIDERS.includes(obj.activeProvider as LlmProvider)) return false;
 	if (!isBoolean(obj.rememberPassphrase)) return false;
@@ -56,7 +59,7 @@ function isSettings(value: unknown): value is ExtensionSettings {
 	const providers = obj.providers;
 	if (!isObject(providers)) return false;
 	for (const provider of PROVIDERS) {
-		if (!isProviderConfig((providers as Record<string, unknown>)[provider])) return false;
+		if (!isProviderConfig(providers[provider])) return false;
 	}
 
 	return isMindset(obj.mindset);
