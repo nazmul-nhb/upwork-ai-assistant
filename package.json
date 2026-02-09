@@ -10,10 +10,22 @@
 		"commit": "nhb-commit"
 	},
 	"devDependencies": {
-		"@crxjs/vite-plugin": "^2.1.0",
-		"@types/chrome": "^0.1.31",
+		"@crxjs/vite-plugin": "^2.3.0",
+		"@eslint/js": "^10.0.1",
+		"@types/chrome": "^0.1.36",
+		"@typescript-eslint/eslint-plugin": "^8.54.0",
+		"@typescript-eslint/parser": "^8.54.0",
+		"eslint": "^10.0.0",
+		"eslint-config-prettier": "^10.1.8",
+		"eslint-plugin-prettier": "^5.5.5",
+		"globals": "^17.3.0",
 		"nhb-scripts": "^1.9.2",
-		"typescript": "^5.5.0",
-		"vite": "^5.4.0"
+		"typescript": "^5.9.3",
+		"typescript-eslint": "^8.54.0",
+		"vite": "^7.3.1"
+	},
+	"dependencies": {
+		"nhb-toolbox": "^4.28.80",
+		"prettier": "^3.8.1"
 	}
 }
