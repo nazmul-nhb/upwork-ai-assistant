@@ -16,7 +16,6 @@ chrome.runtime.onMessage.addListener((message: ContentRequest, _sender, sendResp
 
 	try {
 		const job = extractUpworkJobFromDom(location.href);
-
 		sendResponse({ ok: true, job } satisfies ContentResponse);
 	} catch (error) {
 		const text = error instanceof Error ? error.message : 'Unable to extract job.';
@@ -26,8 +25,10 @@ chrome.runtime.onMessage.addListener((message: ContentRequest, _sender, sendResp
 	return false;
 });
 
+// Initial snapshot on page load
 sendSnapshot();
-console.log('hello');
+
+// Watch for SPA-style navigation changes
 let lastUrl = location.href;
 setInterval(() => {
 	if (location.href !== lastUrl) {

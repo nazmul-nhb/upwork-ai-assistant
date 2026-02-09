@@ -1,79 +1,72 @@
-.popup-wrap {
-	width: 420px;
-	min-height: 560px;
-	padding: 14px;
+.popup-root {
+	width: 320px;
+	padding: 16px;
 	box-sizing: border-box;
-	color: #1d2333;
-	background: linear-gradient(135deg, #f4f9ff 0%, #eef4ff 100%);
-	font-family: 'Segoe UI', Tahoma, Verdana, sans-serif;
+	color: #ecf2ff;
+	font-family: 'Space Grotesk', 'Avenir Next', 'Segoe UI', system-ui, sans-serif;
+	background:
+		radial-gradient(circle at 8% 10%, rgba(83, 167, 255, 0.2), transparent 28%),
+		linear-gradient(160deg, #090f1f 0%, #111a31 45%, #162241 100%);
 }
 
-h1 {
+.popup-root h1 {
 	margin: 0 0 12px;
-	font-size: 18px;
+	font-size: 17px;
+	letter-spacing: 0.2px;
 }
 
-h2 {
-	margin: 0 0 10px;
-	font-size: 14px;
-}
-
-.card {
-	background: #ffffff;
-	border: 1px solid #dbe3f4;
-	border-radius: 12px;
+.popup-card {
+	display: grid;
+	gap: 6px;
 	padding: 12px;
 	margin-bottom: 12px;
-	display: grid;
-	gap: 8px;
+	border: 1px solid rgba(127, 157, 255, 0.2);
+	border-radius: 12px;
+	background: rgba(15, 24, 48, 0.76);
 }
 
-label {
-	display: grid;
-	gap: 5px;
+.popup-label {
+	margin: 0;
 	font-size: 12px;
-	color: #374161;
+	color: #c4d2f5;
 }
 
-input,
-textarea,
-select {
-	border: 1px solid #cfd8ec;
-	border-radius: 9px;
-	padding: 8px 10px;
-	font: inherit;
-	font-size: 13px;
-	background: #fcfdff;
-	color: #1d2333;
+.popup-label strong {
+	color: #ecf2ff;
 }
 
-textarea {
-	resize: vertical;
+.popup-muted {
+	margin: 4px 0 0;
+	font-size: 11px;
+	color: #8899c0;
 }
 
-.row {
+.popup-actions {
 	display: flex;
 	gap: 8px;
 }
 
-button {
-	border: none;
-	border-radius: 8px;
-	background: #0f5bf2;
-	color: white;
+.popup-root button {
+	flex: 1;
+	border: 1px solid rgba(102, 181, 255, 0.5);
+	border-radius: 10px;
+	padding: 9px 10px;
+	background: linear-gradient(140deg, rgba(49, 127, 255, 0.95), rgba(49, 127, 255, 0.72));
+	color: #f8fbff;
 	font-size: 12px;
-	font-weight: 600;
-	padding: 8px 10px;
+	font-weight: 700;
 	cursor: pointer;
+	transition:
+		transform 0.16s ease,
+		box-shadow 0.16s ease;
 }
 
-button:disabled {
-	opacity: 0.6;
-	cursor: not-allowed;
+.popup-root button:hover {
+	transform: translateY(-1px);
+	box-shadow: 0 6px 14px rgba(19, 90, 255, 0.35);
 }
 
-.muted {
-	margin: 0;
-	font-size: 12px;
-	color: #5d698d;
+.popup-root .btn-secondary {
+	background: rgba(15, 24, 48, 0.8);
+	border-color: rgba(127, 157, 255, 0.35);
 }

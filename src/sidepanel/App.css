@@ -3,114 +3,171 @@ input[type='number']::-webkit-outer-spin-button,
 input[type='number']::-webkit-inner-spin-button {
 	margin: 0;
 	appearance: none;
-	-moz-appearance: none;
 	-webkit-appearance: none;
 }
 
 input[type='number'] {
 	appearance: textfield;
-	-moz-appearance: textfield;
 	-webkit-appearance: textfield;
 }
 
-.side-wrap {
-	padding: 12px;
+.side-root {
 	min-height: 100vh;
+	padding: 16px;
 	box-sizing: border-box;
-	background: linear-gradient(165deg, #eef5ff 0%, #f4f8ff 100%);
-	color: #1a2338;
-	font-family: 'Segoe UI', Tahoma, Verdana, sans-serif;
+	color: #ecf2ff;
+	font-family: 'Space Grotesk', 'Avenir Next', 'Segoe UI', system-ui, sans-serif;
+	background:
+		radial-gradient(circle at 8% 10%, rgba(83, 167, 255, 0.2), transparent 28%),
+		radial-gradient(circle at 85% 8%, rgba(105, 240, 214, 0.16), transparent 34%),
+		linear-gradient(160deg, #090f1f 0%, #111a31 45%, #162241 100%);
 }
 
-header h1 {
+.side-hero {
+	margin-bottom: 12px;
+}
+
+.side-hero h1 {
 	margin: 0;
-	font-size: 16px;
+	font-size: 18px;
+	letter-spacing: 0.2px;
 }
 
-header p {
-	margin: 3px 0 10px;
-	color: #4f5f82;
+.side-hero p {
+	margin: 4px 0 0;
+	color: #a9b8df;
 	font-size: 12px;
 }
 
-.card {
-	background: #ffffff;
-	border: 1px solid #d8e2f6;
-	border-radius: 12px;
-	padding: 10px;
-	margin-bottom: 10px;
-	display: grid;
-	gap: 8px;
+.side-hero a {
+	color: #53a7ff;
+	text-decoration: none;
+	cursor: pointer;
 }
 
-.row {
+.side-hero a:hover {
+	text-decoration: underline;
+}
+
+.side-card {
+	display: grid;
+	gap: 10px;
+	margin-bottom: 12px;
+	padding: 12px;
+	border: 1px solid rgba(127, 157, 255, 0.2);
+	border-radius: 14px;
+	background: rgba(15, 24, 48, 0.76);
+	backdrop-filter: blur(8px);
+	box-shadow:
+		0 10px 30px rgba(2, 8, 24, 0.45),
+		inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.side-card h2 {
+	margin: 0;
+	font-size: 14px;
+	font-weight: 700;
+}
+
+.side-row {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 8px;
 }
 
-button {
-	border: none;
-	border-radius: 8px;
-	padding: 7px 10px;
-	background: #0f5bf2;
-	color: white;
-	font-size: 12px;
-	font-weight: 600;
-	cursor: pointer;
-}
-
-button:disabled {
-	opacity: 0.6;
-	cursor: not-allowed;
-}
-
-label {
+.side-root label {
 	display: grid;
-	gap: 4px;
+	gap: 5px;
 	font-size: 12px;
-	color: #344167;
+	color: #c4d2f5;
 }
 
-input,
-pre {
-	border: 1px solid #cfd9ef;
-	border-radius: 9px;
-	background: #fbfdff;
-	color: #1a2338;
-	padding: 8px 10px;
+.side-root input,
+.side-root pre {
+	width: 100%;
+	box-sizing: border-box;
+	border: 1px solid rgba(141, 167, 255, 0.25);
+	border-radius: 10px;
+	background: rgba(8, 14, 32, 0.75);
+	color: #ecf2ff;
+	padding: 9px 10px;
 	font: inherit;
 	font-size: 12px;
+	outline: none;
+	transition:
+		border-color 0.2s ease,
+		box-shadow 0.2s ease;
 }
 
-pre {
+.side-root input:focus {
+	border-color: rgba(83, 167, 255, 0.7);
+	box-shadow: 0 0 0 3px rgba(83, 167, 255, 0.16);
+}
+
+.side-root pre {
 	white-space: pre-wrap;
 	max-height: 240px;
 	overflow: auto;
 }
 
-h2 {
+.side-root button {
+	border: 1px solid rgba(102, 181, 255, 0.5);
+	border-radius: 10px;
+	padding: 8px 12px;
+	background: linear-gradient(140deg, rgba(49, 127, 255, 0.95), rgba(49, 127, 255, 0.72));
+	color: #f8fbff;
+	font-size: 12px;
+	font-weight: 700;
+	letter-spacing: 0.2px;
+	cursor: pointer;
+	transition:
+		transform 0.16s ease,
+		box-shadow 0.16s ease,
+		filter 0.2s ease;
+}
+
+.side-root button:hover:not(:disabled) {
+	transform: translateY(-1px);
+	box-shadow: 0 6px 14px rgba(19, 90, 255, 0.35);
+	filter: brightness(1.07);
+}
+
+.side-root button:disabled {
+	opacity: 0.45;
+	cursor: not-allowed;
+}
+
+.side-muted {
 	margin: 0;
-	font-size: 14px;
-}
-
-ul {
-	margin: 6px 0 0;
-	padding-left: 18px;
-}
-
-li {
-	margin: 2px 0;
-}
-
-.muted,
-.status {
-	margin: 0;
-	color: #4f5f82;
+	color: #a9b8df;
 	font-size: 12px;
 }
 
-.result-block {
+.side-result {
 	display: grid;
-	gap: 6px;
+	gap: 8px;
+	font-size: 12px;
+}
+
+.side-root ul {
+	margin: 0;
+	padding-left: 18px;
+}
+
+.side-root li {
+	margin: 2px 0;
+}
+
+.error-card {
+	border-color: rgba(255, 120, 141, 0.35);
+}
+
+.error-card h2 {
+	color: #ffd2db;
+}
+
+.error-card pre {
+	border-color: rgba(255, 120, 141, 0.45);
+	background: rgba(30, 10, 18, 0.72);
+	color: #ffd9e0;
 }

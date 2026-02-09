@@ -22,7 +22,7 @@ const DEFAULT_SETTINGS: ExtensionSettings = {
 			maxOutputTokens: 1400,
 		},
 		gemini: {
-			model: 'gemini-2.5-pro',
+			model: 'gemini-2.5-flash',
 			baseUrl: 'https://generativelanguage.googleapis.com/v1beta',
 			temperature: 0.2,
 			maxOutputTokens: 2048,
@@ -55,6 +55,7 @@ const DEFAULT_SETTINGS: ExtensionSettings = {
 			'TanStack Query',
 			'Vite',
 			'Mongoose',
+			'NestJS',
 			'Zod',
 			'Docusaurus',
 		],
@@ -81,7 +82,8 @@ const DEFAULT_SETTINGS: ExtensionSettings = {
 const jobByTabId = new Map<number, UpworkJob>();
 
 chrome.runtime.onInstalled.addListener(() => {
-	void chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
+	// Do NOT set openPanelOnActionClick so the popup works normally.
+	void chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: false });
 });
 
 chrome.runtime.onMessage.addListener((msg: unknown, sender, sendResponse) => {
@@ -142,7 +144,7 @@ async function handleMessage(request: BgRequest): Promise<BgResponse> {
 		if (!providerConfig.apiKeyEncrypted) {
 			return {
 				ok: false,
-				error: `No API key is set for ${provider}. Save it in popup settings first.`,
+				error: `No API key is set for ${provider}. Open extension Options to save one.`,
 			};
 		}
 
@@ -186,7 +188,7 @@ async function handleMessage(request: BgRequest): Promise<BgResponse> {
 		if (!providerConfig.apiKeyEncrypted) {
 			return {
 				ok: false,
-				error: `No API key is set for ${provider}. Save it in popup settings first.`,
+				error: `No API key is set for ${provider}. Open extension Options to save one.`,
 			};
 		}
 

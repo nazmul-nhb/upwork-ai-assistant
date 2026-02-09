@@ -1,0 +1,116 @@
+.options-root {
+	max-width: 680px;
+	margin: 0 auto;
+	padding: 24px 20px 40px;
+	box-sizing: border-box;
+	color: #ecf2ff;
+	font-family: 'Space Grotesk', 'Avenir Next', 'Segoe UI', system-ui, sans-serif;
+	background: transparent;
+}
+
+.options-root h1 {
+	margin: 0 0 18px;
+	font-size: 22px;
+	letter-spacing: 0.2px;
+}
+
+.options-card {
+	display: grid;
+	gap: 10px;
+	margin-bottom: 14px;
+	padding: 14px;
+	border: 1px solid rgba(127, 157, 255, 0.2);
+	border-radius: 14px;
+	background: rgba(15, 24, 48, 0.76);
+	backdrop-filter: blur(8px);
+	box-shadow:
+		0 10px 30px rgba(2, 8, 24, 0.45),
+		inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.options-card h2 {
+	margin: 0;
+	font-size: 15px;
+	font-weight: 700;
+}
+
+.options-row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.options-row.grid-2 {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 8px;
+}
+
+.options-root label {
+	display: grid;
+	gap: 5px;
+	font-size: 12px;
+	color: #c4d2f5;
+}
+
+.options-root input,
+.options-root select,
+.options-root textarea {
+	width: 100%;
+	box-sizing: border-box;
+	border: 1px solid rgba(141, 167, 255, 0.25);
+	border-radius: 10px;
+	background: rgba(8, 14, 32, 0.75);
+	color: #ecf2ff;
+	padding: 9px 10px;
+	font: inherit;
+	font-size: 13px;
+	outline: none;
+	transition:
+		border-color 0.2s ease,
+		box-shadow 0.2s ease;
+}
+
+.options-root input:focus,
+.options-root select:focus,
+.options-root textarea:focus {
+	border-color: rgba(83, 167, 255, 0.7);
+	box-shadow: 0 0 0 3px rgba(83, 167, 255, 0.16);
+}
+
+.options-root textarea {
+	resize: vertical;
+}
+
+.options-root button {
+	border: 1px solid rgba(102, 181, 255, 0.5);
+	border-radius: 10px;
+	padding: 8px 14px;
+	background: linear-gradient(140deg, rgba(49, 127, 255, 0.95), rgba(49, 127, 255, 0.72));
+	color: #f8fbff;
+	font-size: 13px;
+	font-weight: 700;
+	letter-spacing: 0.2px;
+	cursor: pointer;
+	transition:
+		transform 0.16s ease,
+		box-shadow 0.16s ease,
+		filter 0.2s ease;
+}
+
+.options-root button:hover:not(:disabled) {
+	transform: translateY(-1px);
+	box-shadow: 0 6px 14px rgba(19, 90, 255, 0.35);
+	filter: brightness(1.07);
+}
+
+.options-root button:disabled {
+	opacity: 0.45;
+	cursor: not-allowed;
+}
+
+.options-muted {
+	margin: 0;
+	color: #a9b8df;
+	font-size: 12px;
+}

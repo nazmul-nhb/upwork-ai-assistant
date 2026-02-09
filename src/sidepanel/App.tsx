@@ -1,5 +1,299 @@
-import AssistantApp from '@/components/AssistantApp';
+import type {
+	AnalysisResult,
+	BgRequest,
+	BgResponse,
+	ContentRequest,
+	ContentResponse,
+	ExtensionSettings,
+	LlmProvider,
+	UpworkJob,
+} from '@/shared/types';
+import { useEffect, useMemo, useState } from 'react';
+import './App.css';
+
+type ErrorDetails = {
+	context: string;
+	provider?: LlmProvider;
+	statusCode?: number;
+	payload?: string;
+};
 
 export default function App() {
-	return <AssistantApp mode="sidepanel" />;
+	const [settings, setSettings] = useState<ExtensionSettings | null>(null);
+	const [job, setJob] = useState<UpworkJob | null>(null);
+	const [result, setResult] = useState<AnalysisResult | null>(null);
+
+	const [passphrase, setPassphrase] = useState('');
+	const [status, setStatus] = useState('Loading...');
+	const [errorDetails, setErrorDetails] = useState<ErrorDetails | null>(null);
+	const [busy, setBusy] = useState(false);
+
+	useEffect(() => {
+		void init();
+	}, []);
+
+	const jobPreview = useMemo(() => {
+		if (!job) return '';
+		return [
+			`Title: ${job.title}`,
+			job.budgetText ? `Budget: ${job.budgetText}` : '',
+			job.experienceLevel ? `Experience: ${job.experienceLevel}` : '',
+			job.projectType ? `Project type: ${job.projectType}` : '',
+			job.skills?.length ? `Skills: ${job.skills.join(', ')}` : '',
+			'',
+			job.description.slice(0, 1300) + (job.description.length > 1300 ? '\n...\n' : ''),
+		]
+			.filter(Boolean)
+			.join('\n');
+	}, [job]);
+
+	async function init(): Promise<void> {
+		setBusy(true);
+		try {
+			const res = (await chrome.runtime.sendMessage({
+				type: 'GET_SETTINGS',
+			} satisfies BgRequest)) as BgResponse;
+
+			if (!res.ok) {
+				setStatus(`Error: ${res.error}`);
+				return;
+			}
+			if (res.type !== 'SETTINGS') return;
+
+			setSettings(res.settings);
+
+			const config = res.settings.providers[res.settings.activeProvider];
+			if (!config.apiKeyEncrypted) {
+				setStatus('No API key configured. Open Settings to set one up.');
+			} else {
+				await refreshJob();
+			}
+		} catch (error) {
+			setStatus(error instanceof Error ? error.message : 'Initialization failed.');
+		} finally {
+			setBusy(false);
+		}
+	}
+
+	async function refreshJob(): Promise<void> {
+		setBusy(true);
+		setResult(null);
+		setErrorDetails(null);
+
+		try {
+			const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+			const activeTab = tabs[0];
+			if (!activeTab?.id) throw new Error('No active tab detected.');
+
+			let extracted: UpworkJob | null = null;
+
+			try {
+				const fromContent = (await chrome.tabs.sendMessage(activeTab.id, {
+					type: 'REQUEST_JOB_SNAPSHOT',
+				} satisfies ContentRequest)) as ContentResponse;
+
+				if (fromContent.ok) extracted = fromContent.job;
+			} catch {
+				// Content script not injected — fall back to cache
+			}
+
+			if (!extracted) {
+				const fromBg = (await chrome.runtime.sendMessage({
+					type: 'GET_ACTIVE_JOB',
+				} satisfies BgRequest)) as BgResponse;
+
+				if (fromBg.ok && fromBg.type === 'ACTIVE_JOB') extracted = fromBg.job;
+			}
+
+			if (!extracted) {
+				throw new Error('Open an Upwork job details page, then click Refresh.');
+			}
+
+			setJob(extracted);
+			setStatus('Job extracted. Run Analyze to generate recommendation and proposal.');
+		} catch (error) {
+			setJob(null);
+			setStatus(error instanceof Error ? error.message : 'Failed to refresh job.');
+		} finally {
+			setBusy(false);
+		}
+	}
+
+	async function analyzeJob(): Promise<void> {
+		if (!job) {
+			setStatus('No job available. Click Refresh first.');
+			return;
+		}
+		if (!passphrase.trim()) {
+			setStatus('Enter your passphrase to decrypt the API key.');
+			return;
+		}
+
+		setBusy(true);
+		setStatus('Analyzing with AI...');
+
+		try {
+			const response = (await chrome.runtime.sendMessage({
+				type: 'ANALYZE_JOB',
+				job,
+				passphrase: passphrase.trim(),
+			} satisfies BgRequest)) as BgResponse;
+
+			if (!response.ok) {
+				consumeError(response, 'Analyze');
+				return;
+			}
+			if (response.type !== 'ANALYSIS') throw new Error('Unexpected response type.');
+
+			setResult(response.result);
+			setStatus('Analysis complete.');
+			setErrorDetails(null);
+		} catch (error) {
+			setResult(null);
+			setStatus(error instanceof Error ? error.message : 'Analysis failed.');
+		} finally {
+			setBusy(false);
+		}
+	}
+
+	async function copyProposal(kind: 'short' | 'full'): Promise<void> {
+		if (!result) return;
+		const text = kind === 'short' ? result.proposalShort : result.proposalFull;
+		await navigator.clipboard.writeText(text);
+		setStatus(`Copied ${kind} proposal.`);
+	}
+
+	function consumeError(response: Extract<BgResponse, { ok: false }>, context: string): void {
+		const prov = response.provider ? `${response.provider.toUpperCase()} ` : '';
+		const code = response.statusCode ? `(${response.statusCode}) ` : '';
+		setStatus(`${context}: ${prov}${code}${response.error}`.trim());
+
+		if (response.rawError) {
+			setErrorDetails({
+				context,
+				provider: response.provider,
+				statusCode: response.statusCode,
+				payload: response.rawError,
+			});
+		} else {
+			setErrorDetails(null);
+		}
+	}
+
+	function openOptions(): void {
+		void chrome.runtime.openOptionsPage();
+	}
+
+	const provider = settings?.activeProvider?.toUpperCase() ?? '—';
+
+	return (
+		<main className="side-root">
+			<div className="side-hero">
+				<h1>Upwork AI Assistant</h1>
+				<p>
+					Provider: <strong>{provider}</strong> &nbsp;|&nbsp;
+					<a href="#" onClick={openOptions}>
+						Settings
+					</a>
+				</p>
+			</div>
+
+			{/* Passphrase + Actions */}
+			<section className="side-card">
+				<label>
+					Passphrase
+					<input
+						type="password"
+						value={passphrase}
+						onChange={(e) => setPassphrase(e.target.value)}
+						placeholder="To decrypt your API key"
+					/>
+				</label>
+
+				<div className="side-row">
+					<button disabled={busy} onClick={() => void refreshJob()}>
+						Refresh
+					</button>
+					<button disabled={busy || !job} onClick={() => void analyzeJob()}>
+						Analyze
+					</button>
+					<button disabled={!result} onClick={() => void copyProposal('short')}>
+						Copy short
+					</button>
+					<button disabled={!result} onClick={() => void copyProposal('full')}>
+						Copy full
+					</button>
+				</div>
+
+				<p className="side-muted">{status}</p>
+			</section>
+
+			{/* Job Preview */}
+			<section className="side-card">
+				<h2>Job Preview</h2>
+				<pre>{jobPreview || 'No job preview available.'}</pre>
+			</section>
+
+			{/* Analysis Results */}
+			{result && (
+				<section className="side-card">
+					<h2>Analysis</h2>
+					<div className="side-result">
+						<p>
+							<strong>Apply:</strong> {result.shouldApply ? 'YES' : 'NO'} |{' '}
+							<strong>Fit:</strong> {result.fitScore}/100
+						</p>
+
+						<strong>Reasons</strong>
+						<ul>
+							{result.keyReasons.map((item, i) => (
+								<li key={`r-${i}`}>{item}</li>
+							))}
+						</ul>
+
+						<strong>Risks</strong>
+						<ul>
+							{result.risks.map((item, i) => (
+								<li key={`k-${i}`}>{item}</li>
+							))}
+						</ul>
+
+						<strong>Questions to ask</strong>
+						<ul>
+							{result.questionsToAsk.map((item, i) => (
+								<li key={`q-${i}`}>{item}</li>
+							))}
+						</ul>
+
+						{result.bidSuggestion && (
+							<p>
+								<strong>Bid suggestion:</strong> {result.bidSuggestion}
+							</p>
+						)}
+
+						<strong>Proposal (short)</strong>
+						<pre>{result.proposalShort}</pre>
+
+						<strong>Proposal (full)</strong>
+						<pre>{result.proposalFull}</pre>
+					</div>
+				</section>
+			)}
+
+			{/* Raw Error */}
+			{errorDetails?.payload && (
+				<section className="side-card error-card">
+					<h2>Raw Provider Error</h2>
+					<p className="side-muted">
+						{errorDetails.context}
+						{errorDetails.provider ?
+							` | ${errorDetails.provider.toUpperCase()}`
+						:	''}
+						{errorDetails.statusCode ? ` (${errorDetails.statusCode})` : ''}
+					</p>
+					<pre>{errorDetails.payload}</pre>
+				</section>
+			)}
+		</main>
+	);
 }
