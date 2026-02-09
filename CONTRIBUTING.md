@@ -56,7 +56,7 @@ Be respectful, constructive, and professional in all interactions. Harassment, d
 
 ## Project Structure
 
-```text
+```ini
 src/
 ├── background/       # Service worker (message handling, LLM calls, extraction)
 ├── content/          # Content script (DOM extraction fallback)
@@ -73,13 +73,14 @@ src/
 
 ### Key Files
 
-| File                      | Purpose                                             |
-| ------------------------- | --------------------------------------------------- |
-| `manifest.config.ts`      | Chrome extension manifest (Manifest V3)             |
-| `vite.config.ts`          | Vite build configuration with CRXJS and zip plugins |
-| `eslint.config.mjs`       | ESLint configuration                                |
-| `src/background/index.ts` | Service worker — all background logic lives here    |
-| `src/shared/types.ts`     | All shared TypeScript types                         |
+| File                      | Purpose                                               |
+| ------------------------- | ----------------------------------------------------- |
+| `manifest.config.ts`      | Chrome extension manifest (Manifest V3)               |
+| `vite.config.ts`          | Vite build configuration with CRXJS and zip plugins   |
+| `eslint.config.mjs`       | ESLint configuration                                  |
+| `src/background/index.ts` | Service worker — all background logic lives here      |
+| `src/shared/types.ts`     | All shared TypeScript types                           |
+| `nhb.scripts.config.mjs`  | Custom development scripts from `nhb-scripts` package |
 
 ## Development Workflow
 
@@ -122,7 +123,7 @@ Run both before submitting a PR. All code must pass linting without errors.
 After making changes:
 
 1. Run `pnpm build` to ensure the project compiles cleanly.
-2. Load/reload the extension in `chrome://extensions`.
+2. Load/reload the extension in `chrome://extensions` or `edge://extensions`.
 3. Test on a real Upwork job details page to verify extraction works.
 4. Test the full workflow: extract → preview → analyze → copy proposal.
 
@@ -131,7 +132,6 @@ After making changes:
 ### TypeScript
 
 - **Strict mode is enabled.** All code must be fully typed — avoid `any`.
-- Use `type` over `interface` for consistency with the existing codebase.
 - Prefer `satisfies` for type assertion on message payloads.
 - Use `unknown` + type guards instead of `any` for deserialized data.
 
@@ -181,11 +181,11 @@ Avoid vague messages like "fix stuff" or "update code".
 
 Include the following:
 
-1. **Browser and version** (e.g., Chrome 132, Edge 131)
-2. **Extension version** (from `chrome://extensions`)
+1. **Browser and version** (e.g., Chrome 145.x.xx.xxx, Edge 144.x.xx.xxx)
+2. **Extension version** (from `chrome://extensions` or `edge://extensions`)
 3. **Steps to reproduce** — specific Upwork URLs help
 4. **Expected vs. actual behavior**
-5. **Console errors** — open DevTools on the extension's service worker (`chrome://extensions` → Inspect views: service worker) and include any error output
+5. **Console errors** — open DevTools on the extension's service worker (`chrome://extensions` or `edge://extensions` → Inspect views: service worker) and include any error output
 
 ### Feature Requests
 

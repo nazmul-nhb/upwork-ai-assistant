@@ -1,4 +1,13 @@
 {
 	"typescript.preferences.importModuleSpecifier": "non-relative",
-	"cSpell.words": ["Avenir", "sidepanel", "upwork", "Upwork"]
+	"cSpell.words": [
+		"Avenir",
+		"HMAC",
+		"initialise",
+		"segmentations",
+		"serialises",
+		"sidepanel",
+		"upwork",
+		"Upwork"
+	]
 }

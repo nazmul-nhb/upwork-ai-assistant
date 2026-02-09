@@ -98,7 +98,7 @@ Each provider supports:
 
 ## Architecture
 
-```text
+```ini
 src/
 ├── background/       # Service worker — message routing, LLM calls, extraction
 ├── content/          # Content script — DOM snapshot for fallback extraction

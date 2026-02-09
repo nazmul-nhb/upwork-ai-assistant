@@ -301,10 +301,10 @@ function extractClient(container: HTMLElement | null) {
 	let clientActiveHires = '';
 	if (hiresEl) {
 		const ht = normalizeSpace(hiresEl.innerText);
-		const hmatch = ht.match(/([\d,]+)\s*hires?/i);
-		if (hmatch) clientTotalHires = hmatch[1];
-		const amatch = ht.match(/([\d,]+)\s*active/i);
-		if (amatch) clientActiveHires = amatch[1];
+		const hMatch = ht.match(/([\d,]+)\s*hires?/i);
+		if (hMatch) clientTotalHires = hMatch[1];
+		const aMatch = ht.match(/([\d,]+)\s*active/i);
+		if (aMatch) clientActiveHires = aMatch[1];
 	}
 
 	const rateEl = aboutClient.querySelector(
