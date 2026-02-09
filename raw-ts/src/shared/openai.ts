@@ -1,3 +1,5 @@
+import { isObject, isString } from 'nhb-toolbox';
+
 /**
  * Calls OpenAI Responses API.
  * @param apiKey OpenAI API key.
@@ -52,33 +54,30 @@ async function safeReadText(res: Response): Promise<string> {
 
 /** @param v Unknown API response */
 function extractOutputText(v: unknown): string {
-	if (!v || typeof v !== 'object') throw new Error('Unexpected OpenAI response.');
-	const o = v as Record<string, unknown>;
+	if (!isObject(v)) throw new Error('Unexpected OpenAI response.');
 
-	const direct = o.output_text;
-	if (typeof direct === 'string') return direct;
+	const direct = v.output_text;
+	if (isString(direct)) return direct;
 
 	// Fallback: attempt to stitch output[].content[].text
-	const out = o.output;
+	const out = v.output;
 	if (!Array.isArray(out)) throw new Error('OpenAI response missing output_text/output.');
+
 	let acc = '';
 	for (const item of out) {
-		if (!item || typeof item !== 'object') continue;
-		const it = item as Record<string, unknown>;
-		const content = it.content;
+		if (!isObject(item)) continue;
+
+		const content = item.content;
 		if (!Array.isArray(content)) continue;
 		for (const c of content) {
-			if (!c || typeof c !== 'object') continue;
-			const co = c as Record<string, unknown>;
+			if (!isObject(c)) continue;
+			const co = c;
 			const text = co.text;
-			if (typeof text === 'string') acc += text;
+			if (isString(text)) acc += text;
 			// Some variants: { type:"output_text", text:"..." }
-			if (
-				typeof co.type === 'string' &&
-				co.type.includes('text') &&
-				typeof co.text === 'string'
-			)
+			if (isString(co.type) && co.type.includes('text') && isString(co.text)) {
 				acc += co.text;
+			}
 		}
 	}
 	if (acc.trim().length === 0)

@@ -1,5 +1,5 @@
 import type { ContentRequest, ContentResponse, ContentSnapshotMessage } from '@/shared/types';
-import { extractUpworkJobFromDom } from '@/shared/upworkExtract';
+import { extractUpworkJobFromDom } from '@/shared/upwork';
 
 function sendSnapshot(): void {
 	try {

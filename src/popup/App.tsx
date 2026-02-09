@@ -1,8 +1,9 @@
-import type { BgRequest, BgResponse, ExtensionSettings, UpworkJob } from '@/shared/types';
-import { useEffect, useState } from 'react';
 import './App.css';
 
-export default function App() {
+import type { BgRequest, BgResponse, ExtensionSettings, UpworkJob } from '@/shared/types';
+import { useEffect, useState } from 'react';
+
+export default function PopUp() {
 	const [settings, setSettings] = useState<ExtensionSettings | null>(null);
 	const [job, setJob] = useState<UpworkJob | null>(null);
 	const [status, setStatus] = useState('Loading...');

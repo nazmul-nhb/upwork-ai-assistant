@@ -1,11 +1,12 @@
+import './App.css';
+
 import type { BgRequest, BgResponse, ExtensionSettings, LlmProvider } from '@/shared/types';
 import { Cipher } from 'nhb-toolbox/hash';
 import { useEffect, useState } from 'react';
-import './App.css';
 
 const PROVIDERS: LlmProvider[] = ['openai', 'gemini', 'grok'];
 
-export default function App() {
+export default function Options() {
 	const [settings, setSettings] = useState<ExtensionSettings | null>(null);
 	const [apiKey, setApiKey] = useState('');
 	const [passphrase, setPassphrase] = useState('');

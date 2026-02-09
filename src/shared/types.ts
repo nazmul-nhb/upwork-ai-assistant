@@ -35,12 +35,41 @@ export type UpworkJob = {
 	url: string;
 	title: string;
 	description: string;
+	postedDate?: string;
+	jobLocation?: string;
+	// Budget & contract info
 	budgetText?: string;
 	experienceLevel?: string;
 	projectType?: string;
+	// Skills
 	skills?: string[];
+	// Activity on this job
+	proposals?: string;
+	lastViewedByClient?: string;
+	hires?: string;
+	interviewing?: string;
+	invitesSent?: string;
+	unansweredInvites?: string;
+	bidRange?: string;
+	// Connects
+	connectsRequired?: string;
+	connectsAvailable?: string;
+	// About the client
 	clientLocation?: string;
-	clientHistorySummary?: string;
+	clientPaymentVerified?: boolean;
+	clientRating?: string;
+	clientReviewCount?: string;
+	clientJobsPosted?: string;
+	clientHireRate?: string;
+	clientOpenJobs?: string;
+	clientTotalSpent?: string;
+	clientTotalHires?: string;
+	clientActiveHires?: string;
+	clientAvgHourlyRate?: string;
+	clientTotalHours?: string;
+	clientIndustry?: string;
+	clientCompanySize?: string;
+	clientMemberSince?: string;
 };
 
 export type AnalysisResult = {

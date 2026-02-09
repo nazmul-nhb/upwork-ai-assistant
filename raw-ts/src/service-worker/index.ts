@@ -1,6 +1,15 @@
 import { loadSettings, saveSettings } from '../shared/storage';
 import type { AnalysisResult, BgRequest, BgResponse, ExtensionSettings } from '../shared/types';
 // import { decryptSecret } from '../shared/crypto';
+import {
+	clampNumber,
+	isArrayOfType,
+	isBoolean,
+	isNumber,
+	isObject,
+	isObjectWithKeys,
+	isString,
+} from 'nhb-toolbox';
 import { Cipher } from 'nhb-toolbox/hash';
 import { callOpenAiJson } from '../shared/openai';
 import { buildPrompt } from '../shared/prompt';
@@ -55,31 +64,19 @@ chrome.runtime.onInstalled.addListener(() => {
 	void chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
 });
 
-chrome.runtime.onMessage.addListener(
-	(
-		msg: unknown,
-		_sender: chrome.runtime.MessageSender,
-		sendResponse: (response?: unknown) => void
-	) => {
-		// Receive job snapshot from content script
-		const isSnapshot =
-			!!msg &&
-			typeof msg === 'object' &&
-			(msg as Record<string, unknown>).type === 'UPWORK_JOB_SNAPSHOT';
+chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
+	// Receive job snapshot from content script
+	const isSnapshot =
+		!!msg && isObjectWithKeys(msg, ['type']) && msg.type === 'UPWORK_JOB_SNAPSHOT';
 
-		void isSnapshot;
+	void isSnapshot;
 
-		sendResponse(undefined);
-		return false;
-	}
-);
+	sendResponse(undefined);
+	return false;
+});
 
 chrome.runtime.onMessage.addListener(
-	(
-		req: BgRequest,
-		_sender: chrome.runtime.MessageSender,
-		sendResponse: (r: BgResponse) => void
-	) => {
+	(req: BgRequest, _sender, sendResponse: (r: BgResponse) => void) => {
 		void handle(req).then(sendResponse);
 		return true;
 	}
@@ -164,7 +161,7 @@ function strictJsonObject(s: string): unknown {
 
 /** @param v unknown */
 function coerceAnalysis(v: unknown): AnalysisResult {
-	if (!v || typeof v !== 'object') throw new Error('Invalid JSON output.');
+	if (!isObject(v)) throw new Error('Invalid JSON output.');
 	const o = v as Record<string, unknown>;
 
 	const shouldApply = asBool(o.shouldApply);
@@ -176,11 +173,11 @@ function coerceAnalysis(v: unknown): AnalysisResult {
 
 	const proposalShort = asString(o.proposalShort);
 	const proposalFull = asString(o.proposalFull);
-	const bidSuggestion = typeof o.bidSuggestion === 'string' ? o.bidSuggestion : undefined;
+	const bidSuggestion = isString(o.bidSuggestion) ? o.bidSuggestion : undefined;
 
 	return {
 		shouldApply,
-		fitScore: clamp(fitScore, 0, 100),
+		fitScore: clampNumber(fitScore, 0, 100),
 		keyReasons,
 		risks,
 		questionsToAsk,
@@ -191,23 +188,18 @@ function coerceAnalysis(v: unknown): AnalysisResult {
 }
 
 function asBool(v: unknown): boolean {
-	if (typeof v !== 'boolean') throw new Error('shouldApply must be boolean');
+	if (!isBoolean(v)) throw new Error('shouldApply must be boolean');
 	return v;
 }
 function asNumber(v: unknown): number {
-	if (typeof v !== 'number' || !Number.isFinite(v))
-		throw new Error('fitScore must be a number');
+	if (!isNumber(v)) throw new Error('fitScore must be a number');
 	return v;
 }
 function asString(v: unknown): string {
-	if (typeof v !== 'string') throw new Error('proposal fields must be string');
+	if (!isString(v)) throw new Error('proposal fields must be string');
 	return v;
 }
 function asStringArray(v: unknown): string[] {
-	if (!Array.isArray(v) || !v.every((x) => typeof x === 'string'))
-		throw new Error('Array fields must be string[]');
+	if (!isArrayOfType(v, isString)) throw new Error('Array fields must be string[]');
 	return v;
-}
-function clamp(n: number, min: number, max: number): number {
-	return Math.max(min, Math.min(max, n));
 }

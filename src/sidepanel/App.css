@@ -67,6 +67,8 @@ input[type='number'] {
 	margin: 0;
 	font-size: 14px;
 	font-weight: 700;
+	padding-bottom: 4px;
+	border-bottom: 1px solid rgba(141, 167, 255, 0.25);
 }
 
 .side-row {
@@ -86,9 +88,9 @@ input[type='number'] {
 .side-root pre {
 	width: 100%;
 	box-sizing: border-box;
-	border: 1px solid rgba(141, 167, 255, 0.25);
+	border: 1px solid #8da7ff40;
 	border-radius: 10px;
-	background: rgba(8, 14, 32, 0.75);
+	background: #080e20bf;
 	color: #ecf2ff;
 	padding: 9px 10px;
 	font: inherit;
@@ -170,4 +172,10 @@ input[type='number'] {
 	border-color: rgba(255, 120, 141, 0.45);
 	background: rgba(30, 10, 18, 0.72);
 	color: #ffd9e0;
+}
+
+.flex-provider {
+	display: flex;
+	justify-content: space-between;
+	gap: 12px;
 }

@@ -1,3 +1,11 @@
+import {
+	clampNumber,
+	isNumber,
+	isObject,
+	isObjectWithKeys,
+	isPositiveInteger,
+	isString,
+} from 'nhb-toolbox';
 import type { LlmProvider } from './types';
 
 export type LlmRequest = {
@@ -144,10 +152,8 @@ async function callGemini(request: LlmRequest): Promise<string> {
 	}
 
 	const text = parts
-		.map((part) =>
-			part && typeof part === 'object' ? (part as Record<string, unknown>).text : ''
-		)
-		.filter((value): value is string => typeof value === 'string')
+		.map((part) => (isObjectWithKeys(part, ['text']) ? part.text : ''))
+		.filter(isString)
 		.join('')
 		.trim();
 
@@ -206,7 +212,7 @@ async function callGrok(request: LlmRequest): Promise<string> {
 	const message = first.message as Record<string, unknown>;
 	const content = message?.content;
 
-	if (typeof content !== 'string' || !content.trim()) {
+	if (!isString(content) || !content.trim()) {
 		throw new LlmProviderError({
 			provider: 'grok',
 			message: 'Grok response content is empty.',
@@ -218,13 +224,13 @@ async function callGrok(request: LlmRequest): Promise<string> {
 }
 
 function extractOpenAiText(value: unknown): string {
-	if (!value || typeof value !== 'object') {
+	if (!isObject(value)) {
 		throw new Error('OpenAI response is invalid.');
 	}
 
-	const response = value as Record<string, unknown>;
+	const response = value;
 	const direct = response.output_text;
-	if (typeof direct === 'string' && direct.trim()) return direct;
+	if (isString(direct) && direct.trim()) return direct;
 
 	const output = response.output;
 	if (!Array.isArray(output)) {
@@ -233,14 +239,14 @@ function extractOpenAiText(value: unknown): string {
 
 	const chunks: string[] = [];
 	for (const item of output) {
-		if (!item || typeof item !== 'object') continue;
-		const content = (item as Record<string, unknown>).content;
+		if (!isObject(item)) continue;
+		const content = item.content;
 		if (!Array.isArray(content)) continue;
 
 		for (const part of content) {
-			if (!part || typeof part !== 'object') continue;
-			const text = (part as Record<string, unknown>).text;
-			if (typeof text === 'string' && text.trim()) chunks.push(text);
+			if (!isObject(part)) continue;
+			const text = part.text;
+			if (isString(text) && text.trim()) chunks.push(text);
 		}
 	}
 
@@ -253,13 +259,14 @@ function extractOpenAiText(value: unknown): string {
 }
 
 function normalizeTemperature(value: number | undefined, fallback: number): number {
-	if (typeof value !== 'number' || !Number.isFinite(value)) return fallback;
-	return Math.max(0, Math.min(2, value));
+	if (!isNumber(value)) return fallback;
+	return clampNumber(value, 0, 2);
 }
 
 function normalizeMaxOutputTokens(value: number | undefined, fallback: number): number {
-	if (!Number.isInteger(value) || (value as number) < 1) return fallback;
-	return Math.max(1, Math.min(32000, value as number));
+	if (!isPositiveInteger(value) || value! < 1) return fallback;
+
+	return clampNumber(value, 1, 32000);
 }
 
 async function safeReadText(response: Response): Promise<string> {

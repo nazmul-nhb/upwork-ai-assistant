@@ -1,10 +1,11 @@
+import { isArrayOfType, isBoolean, isObject, isString } from 'nhb-toolbox';
 import type { ExtensionSettings } from './types';
 
 const KEY = 'UPWORK_AI_ASSISTANT_SETTINGS_V1';
 
 export async function loadSettings(): Promise<ExtensionSettings | null> {
 	const data = await chrome.storage.local.get(KEY);
-	const v = data[KEY] as unknown;
+	const v = data[KEY];
 	return isSettings(v) ? v : null;
 }
 
@@ -12,27 +13,23 @@ export async function saveSettings(settings: ExtensionSettings): Promise<void> {
 	await chrome.storage.local.set({ [KEY]: settings });
 }
 
-function isStringArray(v: unknown): v is string[] {
-	return Array.isArray(v) && v.every((x) => typeof x === 'string');
-}
-
 function isSettings(v: unknown): v is ExtensionSettings {
-	if (!v || typeof v !== 'object') return false;
-	const o = v as Record<string, unknown>;
-	if (o.provider !== 'openai') return false;
-	const mindset = o.mindset as unknown;
-	if (!mindset || typeof mindset !== 'object') return false;
+	if (!isObject(v)) return false;
 
-	const m = mindset as Record<string, unknown>;
+	if (v.provider !== 'openai') return false;
+
+	const mindset = v.mindset;
+	if (!isObject(mindset)) return false;
+
 	return (
-		typeof m.profileName === 'string' &&
-		typeof m.roleTitle === 'string' &&
-		isStringArray(m.coreSkills) &&
-		isStringArray(m.secondarySkills) &&
-		isStringArray(m.noGoSkills) &&
-		isStringArray(m.proposalStyleRules) &&
-		isStringArray(m.redFlags) &&
-		typeof m.defaultModel === 'string' &&
-		typeof o.rememberPassphrase === 'boolean'
+		isString(mindset.profileName) &&
+		isString(mindset.roleTitle) &&
+		isArrayOfType(mindset.coreSkills, isString) &&
+		isArrayOfType(mindset.secondarySkills, isString) &&
+		isArrayOfType(mindset.noGoSkills, isString) &&
+		isArrayOfType(mindset.proposalStyleRules, isString) &&
+		isArrayOfType(mindset.redFlags, isString) &&
+		isString(mindset.defaultModel) &&
+		isBoolean(v.rememberPassphrase)
 	);
 }

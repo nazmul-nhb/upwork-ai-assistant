@@ -1,4 +1,5 @@
-import type { BgRequest, BgResponse, UpworkJob, AnalysisResult } from '../shared/types';
+import { isObject } from 'nhb-toolbox';
+import type { AnalysisResult, BgRequest, BgResponse, UpworkJob } from '../shared/types';
 
 let currentJob: UpworkJob | null = null;
 let latestResult: AnalysisResult | null = null;
@@ -160,13 +161,12 @@ async function getJobSnapshotViaBg(tabId: number): Promise<UpworkJob> {
 	});
 
 	const v = res?.result as unknown;
-	if (!v || typeof v !== 'object') throw new Error('Could not read job page.');
+	if (!isObject(v)) throw new Error('Could not read job page.');
 
-	const o = v as Record<string, unknown>;
 	return {
-		url: String(o.url ?? ''),
-		title: String(o.title ?? 'Untitled job'),
-		description: String(o.desc ?? ''),
+		url: String(v.url ?? ''),
+		title: String(v.title ?? 'Untitled job'),
+		description: String(v.desc ?? ''),
 	};
 }
 

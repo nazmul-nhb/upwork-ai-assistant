@@ -9,14 +9,18 @@ import type {
 	ExtensionSettings,
 	UpworkJob,
 } from '@/shared/types';
+import { isArrayOfType, isBoolean, isNumber, isObject, isString } from 'nhb-toolbox';
 import { Cipher } from 'nhb-toolbox/hash';
 
 const JOB_URL_PATTERNS = [
 	'https://www.upwork.com/jobs/*',
 	'https://www.upwork.com/nx/find-work/details/*',
+	'https://www.upwork.com/nx/find-work/best-matches/details/*',
+	'https://www.upwork.com/nx/find-work/most-recent/details/*',
+	'https://www.upwork.com/nx/find-work/*/details/*',
 ];
 
-const JOB_URL_REGEX = /upwork\.com\/(jobs\/|nx\/find-work\/details\/)/;
+const JOB_URL_REGEX = /upwork\.com\/(jobs\/|nx\/find-work\/(.*\/)?details\/)/;
 
 const DEFAULT_SETTINGS: ExtensionSettings = {
 	activeProvider: 'openai',
@@ -288,9 +292,9 @@ async function getActiveTabId(): Promise<number | null> {
 }
 
 function isContentSnapshotMessage(value: unknown): value is ContentSnapshotMessage {
-	if (!value || typeof value !== 'object') return false;
-	const obj = value as Record<string, unknown>;
-	return obj.type === 'UPWORK_JOB_SNAPSHOT' && !!obj.job;
+	if (!isObject(value)) return false;
+
+	return value.type === 'UPWORK_JOB_SNAPSHOT' && !!value.job;
 }
 
 function strictJsonObject(text: string): unknown {
@@ -310,7 +314,7 @@ function strictJsonObject(text: string): unknown {
 }
 
 function coerceAnalysis(value: unknown): AnalysisResult {
-	if (!value || typeof value !== 'object') {
+	if (!isObject(value)) {
 		throw new Error('Invalid AI output format.');
 	}
 
@@ -327,35 +331,35 @@ function coerceAnalysis(value: unknown): AnalysisResult {
 		proposalShort: asString(object.proposalShort, 'proposalShort'),
 		proposalFull: asString(object.proposalFull, 'proposalFull'),
 		bidSuggestion:
-			typeof object.bidSuggestion === 'string' && object.bidSuggestion.trim() ?
+			isString(object.bidSuggestion) && object.bidSuggestion.trim() ?
 				object.bidSuggestion
 			:	undefined,
 	};
 }
 
 function asBoolean(value: unknown, field: string): boolean {
-	if (typeof value !== 'boolean') {
+	if (!isBoolean(value)) {
 		throw new Error(`AI output field ${field} must be boolean.`);
 	}
 	return value;
 }
 
 function asNumber(value: unknown, field: string): number {
-	if (typeof value !== 'number' || !Number.isFinite(value)) {
+	if (!isNumber(value)) {
 		throw new Error(`AI output field ${field} must be a valid number.`);
 	}
 	return value;
 }
 
 function asString(value: unknown, field: string): string {
-	if (typeof value !== 'string') {
+	if (!isString(value)) {
 		throw new Error(`AI output field ${field} must be a string.`);
 	}
 	return value;
 }
 
 function asStringArray(value: unknown, field: string): string[] {
-	if (!Array.isArray(value) || !value.every((item) => typeof item === 'string')) {
+	if (!isArrayOfType(value, isString)) {
 		throw new Error(`AI output field ${field} must be string[].`);
 	}
 	return value;
@@ -388,12 +392,7 @@ async function extractJobViaScripting(tabId: number): Promise<UpworkJob | null> 
 		});
 
 		const raw = frame?.result;
-		if (
-			raw &&
-			typeof raw === 'object' &&
-			typeof (raw as Record<string, unknown>).title === 'string' &&
-			typeof (raw as Record<string, unknown>).description === 'string'
-		) {
+		if (isObject(raw) && isString(raw.title) && isString(raw.description)) {
 			return raw as UpworkJob;
 		}
 	} catch {
@@ -408,20 +407,19 @@ async function extractJobViaScripting(tabId: number): Promise<UpworkJob | null> 
  * variables — Chrome serialises the function body and runs it in isolation.
  */
 function extractJobFromPageDOM() {
-	const normalizeSpace = (v: string) => v.replace(/\s+/g, ' ').trim();
+	const norm = (v: string) => v.replace(/\s+/g, ' ').trim();
 
-	const escapeRx = (v: string) => v.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-
-	const extractNuxt = (field: string): string => {
+	const nuxtField = (field: string): string => {
 		try {
 			const el = document.querySelector('#__NUXT_DATA__');
 			if (!el?.textContent) return '';
 			const data: unknown[] = JSON.parse(el.textContent);
 			for (let i = 0; i < data.length; i++) {
-				if (typeof data[i] === 'string' && data[i] === field) {
+				if (data[i] === field) {
 					for (let j = i + 1; j < Math.min(i + 5, data.length); j++) {
-						if (typeof data[j] === 'string' && (data[j] as string).length > 3)
-							return data[j] as string;
+						const val = data[j];
+
+						if (isString(val) && val.length > 3) return val;
 					}
 				}
 			}
@@ -432,100 +430,405 @@ function extractJobFromPageDOM() {
 	};
 
 	const content = document.querySelector('.job-details-content') as HTMLElement | null;
+	const sidebar = content?.querySelector('.sidebar') as HTMLElement | null;
 
 	// ---- Title ----
 	const extractTitle = (): string => {
 		const span = content?.querySelector('h4 span.flex-1') as HTMLElement | null;
-		if (span) return normalizeSpace(span.innerText);
-
+		if (span) return norm(span.innerText);
 		const h4 = content?.querySelector('h4') as HTMLElement | null;
-		if (h4) return normalizeSpace(h4.innerText);
-
-		const nuxt = extractNuxt('title');
-		if (nuxt) return nuxt;
-
+		if (h4) return norm(h4.innerText);
+		const n = nuxtField('title');
+		if (n) return n;
 		const h1 = document.querySelector('h1') as HTMLElement | null;
-		if (h1) return normalizeSpace(h1.innerText);
-
+		if (h1) return norm(h1.innerText);
 		const cleaned = document.title.replace(/\s*[-|]\s*Upwork.*$/i, '').trim();
 		return cleaned || 'Job title cannot be parsed!';
 	};
 
-	const title = extractTitle();
-
-	// ---- Description ----
-	let description = '';
-	for (const sel of [
-		'[data-test="Description"]',
-		'[data-test="job-description"]',
-		'.job-description',
-	]) {
-		const el = (content ?? document).querySelector(sel) as HTMLElement | null;
+	// ---- Posted date ----
+	const extractPostedDate = (): string => {
+		const el = content?.querySelector('.posted-on-line') as HTMLElement | null;
 		if (el) {
-			const t = normalizeSpace(el.innerText);
-			if (t.length > 20) {
-				description = t;
-				break;
-			}
-		}
-	}
-	if (!description && content) {
-		const sec = content.querySelector('section') as HTMLElement | null;
-		description = normalizeSpace(sec ? sec.innerText : content.innerText);
-	}
-
-	// ---- Labeled values ----
-	const findLabeled = (labels: string[]): string => {
-		const text = content?.innerText ?? '';
-		if (!text) return '';
-		for (const label of labels) {
-			const re = new RegExp(`${escapeRx(label)}\\s*[:\\n]\\s*([^\\n]+)`, 'i');
-			const m = text.match(re);
-			if (m?.[1]) return normalizeSpace(m[1]);
+			const t = norm(el.innerText);
+			// "Posted yesterday" or "Posted 2 hours ago"
+			const m = t.match(/Posted\s+(.+)/i);
+			if (m?.[1]) return m[1];
+			return t;
 		}
 		return '';
 	};
 
+	// ---- Job location (Worldwide / U.S. only etc) ----
+	const extractJobLocation = (): string => {
+		// The location line is in .posted-on-line sibling or nearby
+		const els = content?.querySelectorAll('.posted-on-line ~ div, .posted-on-line div');
+		if (els) {
+			for (const el of els) {
+				const t = norm((el as HTMLElement).innerText);
+				if (t && /worldwide|domestic|u\.?s\.?\s*only|europe|asia|remote/i.test(t)) {
+					return t;
+				}
+			}
+		}
+		// Try the posted-on-line itself which may contain a location paragraph
+		const line = content?.querySelector('.posted-on-line') as HTMLElement | null;
+		if (line) {
+			const ps = line.querySelectorAll('p');
+			for (const p of ps) {
+				const t = norm(p.innerText);
+				if (/worldwide|domestic|u\.?s\.?\s*only|remote/i.test(t)) return t;
+			}
+		}
+		return '';
+	};
+
+	// ---- Description ----
+	const extractDescription = (): string => {
+		for (const sel of [
+			'[data-test="Description"]',
+			'[data-test="job-description"]',
+			'.job-description',
+		]) {
+			const el = (content ?? document).querySelector(sel) as HTMLElement | null;
+			if (el) {
+				const t = norm(el.innerText);
+				if (t.length > 20) return t;
+			}
+		}
+		if (content) {
+			const sec = content.querySelector('section') as HTMLElement | null;
+			return norm(sec ? sec.innerText : content.innerText);
+		}
+		return '';
+	};
+
+	// ---- Features list (budget, experience, project type etc) ----
+	// Upwork uses a <ul class="features"> with <li> items each containing:
+	//   <strong>$5.00</strong> ... <div class="description">Fixed-price</div>
+	//   <strong>Intermediate</strong> ... <div class="description">Experience Level</div>
+	const extractFeatures = () => {
+		let budgetText = '';
+		let experienceLevel = '';
+		let projectType = '';
+
+		// Features approach: look at <li> in the features list
+		const featureItems = content?.querySelectorAll('ul.features li, .features li');
+		if (featureItems) {
+			for (const li of featureItems) {
+				const descEl = li.querySelector('.description') as HTMLElement | null;
+				const desc = descEl ? norm(descEl.innerText).toLowerCase() : '';
+				const strongEl = li.querySelector('strong') as HTMLElement | null;
+				const value = strongEl ? norm(strongEl.innerText) : '';
+
+				if (desc.includes('fixed-price') || desc.includes('hourly')) {
+					// Budget line: value is the amount, desc is the type
+					budgetText =
+						value ?
+							`${value} (${norm(descEl!.innerText)})`
+						:	norm(descEl!.innerText);
+				} else if (desc.includes('experience level') || desc.includes('experience')) {
+					experienceLevel = value || norm(descEl!.innerText);
+				}
+			}
+		}
+
+		// Also check data-cy attributes as alternative selectors
+		if (!budgetText) {
+			const fpEl = content?.querySelector(
+				'[data-cy="fixed-price"]'
+			) as HTMLElement | null;
+			const hrEl = content?.querySelector('[data-cy="hourly"]') as HTMLElement | null;
+			const budgetLi = fpEl?.closest('li') ?? hrEl?.closest('li');
+			if (budgetLi) {
+				const strongEl = budgetLi.querySelector('strong') as HTMLElement | null;
+				const descEl = budgetLi.querySelector('.description') as HTMLElement | null;
+				const amount = strongEl ? norm(strongEl.innerText) : '';
+				const type = descEl ? norm(descEl.innerText) : '';
+				budgetText = amount ? `${amount} (${type})` : type;
+			}
+		}
+
+		if (!experienceLevel) {
+			const expEl = content?.querySelector('[data-cy="expertise"]') as HTMLElement | null;
+			const expLi = expEl?.closest('li');
+			if (expLi) {
+				const strongEl = expLi.querySelector('strong') as HTMLElement | null;
+				experienceLevel = strongEl ? norm(strongEl.innerText) : '';
+			}
+		}
+
+		// Project type: <strong>Project Type:</strong><span>One-time project</span>
+		const segLists = content?.querySelectorAll('.segmentations li, ul.list-unstyled li');
+		if (segLists) {
+			for (const li of segLists) {
+				const strongEl = li.querySelector('strong') as HTMLElement | null;
+				const label = strongEl ? norm(strongEl.innerText).toLowerCase() : '';
+				if (label.includes('project type')) {
+					const spanEl = li.querySelector('span') as HTMLElement | null;
+					projectType = spanEl ? norm(spanEl.innerText) : '';
+				}
+			}
+		}
+
+		return { budgetText, experienceLevel, projectType };
+	};
+
 	// ---- Skills ----
-	const root = content ?? document;
-	const tags = Array.from(root.querySelectorAll('[data-test="skill"]'))
-		.map((el) => normalizeSpace(el.textContent ?? ''))
-		.filter(Boolean);
-	let skills: string[] | undefined;
-	if (tags.length) {
-		skills = [...new Set(tags)];
-	} else {
-		const m = (content?.innerText ?? '').match(/Skills\s*[:\n]\s*([^\n]+)/i);
+	const extractSkills = (): string[] | undefined => {
+		// Primary: badges in .skills-list
+		const badges = (content ?? document).querySelectorAll(
+			'.skills-list .air3-badge, .skills-list .badge, [data-test="skill"]'
+		);
+		const tags: string[] = [];
+		for (const el of badges) {
+			// Get the deepest text which is inside .air3-line-clamp or direct text
+			const clamp = el.querySelector('.air3-line-clamp') as HTMLElement | null;
+			const text = norm((clamp ?? (el as HTMLElement)).textContent ?? '');
+			if (text) tags.push(text);
+		}
+		if (tags.length > 0) return [...new Set(tags)];
+
+		// Fallback: regex from innerText
+		const text = content?.innerText ?? '';
+		const m = text.match(/Skills\s*[:\n]\s*([^\n]+)/i);
 		if (m?.[1]) {
 			const parts = m[1]
 				.split(',')
-				.map((p) => normalizeSpace(p))
+				.map((p) => norm(p))
 				.filter(Boolean);
-			if (parts.length) skills = [...new Set(parts)];
+			if (parts.length) return [...new Set(parts)];
 		}
-	}
+		return undefined;
+	};
 
-	// ---- Client history ----
-	let clientHistorySummary = '';
-	const allText = content?.innerText ?? '';
-	if (allText) {
-		const lines = allText
-			.split('\n')
-			.map((l) => normalizeSpace(l))
-			.filter(Boolean);
-		const idx = lines.findIndex((l) => /client|history|reviews|spent|hires/i.test(l));
-		if (idx >= 0) clientHistorySummary = lines.slice(idx, idx + 6).join(' | ');
-	}
+	// ---- Activity on this job ----
+	const extractActivity = () => {
+		const result: Record<string, string> = {};
+		const items = content?.querySelectorAll(
+			'.client-activity-items .ca-item, .client-activity-items li'
+		);
+		if (items) {
+			for (const li of items) {
+				const titleEl = li.querySelector('.title, span.title') as HTMLElement | null;
+				const valueEl = li.querySelector(
+					'.value, span.value, div.value'
+				) as HTMLElement | null;
+				if (titleEl && valueEl) {
+					const key = norm(titleEl.innerText).replace(/:$/, '').toLowerCase();
+					const val = norm(valueEl.innerText);
+					result[key] = val;
+				}
+			}
+		}
+		return result;
+	};
+
+	// ---- Bid range (inside a <h5><strong>) ----
+	const extractBidRange = (): string => {
+		const headings = content?.querySelectorAll('h5 strong, h5');
+		if (headings) {
+			for (const h of headings) {
+				const t = norm((h as HTMLElement).innerText);
+				if (t.toLowerCase().includes('bid range'))
+					return t.replace(/^bid range\s*[-–—]?\s*/i, '');
+			}
+		}
+		return '';
+	};
+
+	// ---- Connects info (sidebar) ----
+	const extractConnects = () => {
+		let connectsRequired = '';
+		let connectsAvailable = '';
+
+		const connectsContainer = sidebar ?? content;
+		if (connectsContainer) {
+			const text = connectsContainer.innerText;
+			// "Required Connects to submit a proposal: 13"
+			const reqMatch = text.match(/Required Connects.*?:\s*(\d+)/i);
+			if (reqMatch) connectsRequired = reqMatch[1];
+			// "Available Connects: 22"
+			const availMatch = text.match(/Available Connects:\s*(\d+)/i);
+			if (availMatch) connectsAvailable = availMatch[1];
+		}
+
+		return { connectsRequired, connectsAvailable };
+	};
+
+	// ---- About the client ----
+	const extractClient = () => {
+		const aboutClient = (sidebar ?? content)?.querySelector(
+			'[data-test="about-client-container"], .cfe-ui-job-about-client'
+		) as HTMLElement | null;
+
+		if (!aboutClient) {
+			// Fallback: try regex from sidebar/content text
+			return {} as Record<string, string | boolean>;
+		}
+
+		const clientText = aboutClient.innerText;
+
+		// Payment verified
+		const paymentVerified = /payment (method )?verified/i.test(clientText);
+
+		// Rating
+		let clientRating = '';
+		const ratingEl = aboutClient.querySelector(
+			'.air3-rating-value-text'
+		) as HTMLElement | null;
+		if (ratingEl) clientRating = norm(ratingEl.innerText);
+
+		// Review count: "4.95 of 391 reviews"
+		let clientReviewCount = '';
+		const reviewMatch = clientText.match(/([\d.]+)\s+of\s+([\d,]+)\s+reviews?/i);
+		if (reviewMatch) clientReviewCount = `${reviewMatch[1]} of ${reviewMatch[2]} reviews`;
+
+		// Client location: [data-qa="client-location"]
+		let clientLocation = '';
+		const locEl = aboutClient.querySelector(
+			'[data-qa="client-location"]'
+		) as HTMLElement | null;
+		if (locEl) {
+			const strongEl = locEl.querySelector('strong') as HTMLElement | null;
+			clientLocation = strongEl ? norm(strongEl.innerText) : norm(locEl.innerText);
+		}
+
+		// Jobs posted: [data-qa="client-job-posting-stats"]
+		let clientJobsPosted = '';
+		let clientHireRate = '';
+		let clientOpenJobs = '';
+		const jobStatsEl = aboutClient.querySelector(
+			'[data-qa="client-job-posting-stats"]'
+		) as HTMLElement | null;
+		if (jobStatsEl) {
+			const strongText = norm(jobStatsEl.querySelector('strong')?.innerText ?? '');
+			const jm = strongText.match(/([\d,]+)\s+jobs?\s+posted/i);
+			if (jm) clientJobsPosted = jm[1];
+			const divText = norm(
+				jobStatsEl.querySelector('div')?.innerText ?? jobStatsEl.innerText
+			);
+			const hm = divText.match(/([\d.]+%)\s+hire\s+rate/i);
+			if (hm) clientHireRate = hm[1];
+			const om = divText.match(/([\d,]+)\s+open\s+jobs?/i);
+			if (om) clientOpenJobs = om[1];
+		}
+
+		// Total spent
+		let clientTotalSpent = '';
+		const spendEl = aboutClient.querySelector(
+			'[data-qa="client-spend"]'
+		) as HTMLElement | null;
+		if (spendEl) {
+			const sm = norm(spendEl.innerText).match(/([$\d,.KkMm]+)\s*total\s*spent/i);
+			if (sm) clientTotalSpent = sm[1];
+		}
+
+		// Hires
+		let clientTotalHires = '';
+		let clientActiveHires = '';
+		const hiresEl = aboutClient.querySelector(
+			'[data-qa="client-hires"]'
+		) as HTMLElement | null;
+		if (hiresEl) {
+			const ht = norm(hiresEl.innerText);
+			const hmatch = ht.match(/([\d,]+)\s*hires?/i);
+			if (hmatch) clientTotalHires = hmatch[1];
+			const amatch = ht.match(/([\d,]+)\s*active/i);
+			if (amatch) clientActiveHires = amatch[1];
+		}
+
+		// Avg hourly rate
+		let clientAvgHourlyRate = '';
+		const rateEl = aboutClient.querySelector(
+			'[data-qa="client-hourly-rate"]'
+		) as HTMLElement | null;
+		if (rateEl) {
+			const rm = norm(rateEl.innerText).match(/([$\d,.]+\/hr)/i);
+			if (rm) clientAvgHourlyRate = rm[1];
+		}
+
+		// Total hours
+		let clientTotalHours = '';
+		const hoursEl = aboutClient.querySelector(
+			'[data-qa="client-hours"]'
+		) as HTMLElement | null;
+		if (hoursEl) clientTotalHours = norm(hoursEl.innerText);
+
+		// Industry
+		let clientIndustry = '';
+		const indEl = aboutClient.querySelector(
+			'[data-qa="client-company-profile-industry"]'
+		) as HTMLElement | null;
+		if (indEl) clientIndustry = norm(indEl.innerText);
+
+		// Company size
+		let clientCompanySize = '';
+		const sizeEl = aboutClient.querySelector(
+			'[data-qa="client-company-profile-size"]'
+		) as HTMLElement | null;
+		if (sizeEl) clientCompanySize = norm(sizeEl.innerText);
+
+		// Member since
+		let clientMemberSince = '';
+		const memberEl = aboutClient.querySelector(
+			'[data-qa="client-contract-date"]'
+		) as HTMLElement | null;
+		if (memberEl) {
+			const mt = norm(memberEl.innerText);
+			const mm = mt.match(/Member since\s+(.+)/i);
+			clientMemberSince = mm ? mm[1] : mt;
+		}
+
+		return {
+			clientPaymentVerified: paymentVerified,
+			clientRating,
+			clientReviewCount,
+			clientLocation,
+			clientJobsPosted,
+			clientHireRate,
+			clientOpenJobs,
+			clientTotalSpent,
+			clientTotalHires,
+			clientActiveHires,
+			clientAvgHourlyRate,
+			clientTotalHours,
+			clientIndustry,
+			clientCompanySize,
+			clientMemberSince,
+		};
+	};
+
+	const title = extractTitle();
+	const description = extractDescription();
+	const postedDate = extractPostedDate();
+	const jobLocation = extractJobLocation();
+	const { budgetText, experienceLevel, projectType } = extractFeatures();
+	const skills = extractSkills();
+	const activity = extractActivity();
+	const bidRange = extractBidRange();
+	const { connectsRequired, connectsAvailable } = extractConnects();
+	const client = extractClient();
 
 	return {
 		url: location.href,
 		title,
 		description,
-		budgetText: findLabeled(['Budget', 'Hourly Range', 'Fixed-price']),
-		experienceLevel: findLabeled(['Experience level', 'Experience Level']),
-		projectType: findLabeled(['Project type', 'Project Type']),
+		postedDate: postedDate || undefined,
+		jobLocation: jobLocation || undefined,
+		budgetText: budgetText || undefined,
+		experienceLevel: experienceLevel || undefined,
+		projectType: projectType || undefined,
 		skills,
-		clientLocation: findLabeled(['Location']),
-		clientHistorySummary,
+		proposals: activity['proposals'] || undefined,
+		lastViewedByClient: activity['last viewed by client'] || undefined,
+		hires: activity['hires'] || undefined,
+		interviewing: activity['interviewing'] || undefined,
+		invitesSent: activity['invites sent'] || undefined,
+		unansweredInvites: activity['unanswered invites'] || undefined,
+		bidRange: bidRange || undefined,
+		connectsRequired: connectsRequired || undefined,
+		connectsAvailable: connectsAvailable || undefined,
+		...(client as Record<string, unknown>),
 	};
 }

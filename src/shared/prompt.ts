@@ -1,3 +1,4 @@
+import { formatJobPreview } from '@/shared/upwork';
 import type { UpworkJob, UserMindset } from './types';
 
 export function buildPrompt(
@@ -33,25 +34,14 @@ export function buildPrompt(
 		'  "proposalFull": string,',
 		'  "bidSuggestion": string',
 		'}',
+		'fitScore should be calculated out of 100 based on how well the job matches the user mindset, skills, and experience. 100 means perfect fit, 0 means no fit.',
 	].join('\n');
 
 	const input = [
 		'Analyze this Upwork job and produce the JSON output schema exactly.',
 		'',
-		`URL: ${job.url}`,
-		`Title: ${job.title}`,
-		job.budgetText ? `Budget: ${job.budgetText}` : '',
-		job.experienceLevel ? `Experience: ${job.experienceLevel}` : '',
-		job.projectType ? `Project type: ${job.projectType}` : '',
-		job.skills?.length ? `Skills: ${job.skills.join(', ')}` : '',
-		job.clientLocation ? `Client location: ${job.clientLocation}` : '',
-		job.clientHistorySummary ? `Client history: ${job.clientHistorySummary}` : '',
-		'',
-		'Description:',
-		job.description,
-	]
-		.filter((line) => line.trim().length > 0)
-		.join('\n');
+		formatJobPreview(job),
+	].join('\n');
 
 	return { instructions, input };
 }

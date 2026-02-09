@@ -1,3 +1,5 @@
+import './App.css';
+
 import type {
 	AnalysisResult,
 	BgRequest,
@@ -6,8 +8,9 @@ import type {
 	LlmProvider,
 	UpworkJob,
 } from '@/shared/types';
+import { formatJobPreview } from '@/shared/upwork';
+import { copyToClipboard } from 'nhb-toolbox';
 import { useEffect, useMemo, useState } from 'react';
-import './App.css';
 
 type ErrorDetails = {
 	context: string;
@@ -16,7 +19,7 @@ type ErrorDetails = {
 	payload?: string;
 };
 
-export default function App() {
+export default function SidePanel() {
 	const [settings, setSettings] = useState<ExtensionSettings | null>(null);
 	const [job, setJob] = useState<UpworkJob | null>(null);
 	const [result, setResult] = useState<AnalysisResult | null>(null);
@@ -28,21 +31,12 @@ export default function App() {
 
 	useEffect(() => {
 		void init();
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
 	const jobPreview = useMemo(() => {
 		if (!job) return '';
-		return [
-			`Title: ${job.title}`,
-			job.budgetText ? `Budget: ${job.budgetText}` : '',
-			job.experienceLevel ? `Experience: ${job.experienceLevel}` : '',
-			job.projectType ? `Project type: ${job.projectType}` : '',
-			job.skills?.length ? `Skills: ${job.skills.join(', ')}` : '',
-			'',
-			job.description.slice(0, 1300) + (job.description.length > 1300 ? '\n...\n' : ''),
-		]
-			.filter(Boolean)
-			.join('\n');
+		return formatJobPreview(job);
 	}, [job]);
 
 	async function init(): Promise<void> {
@@ -147,7 +141,9 @@ export default function App() {
 	async function copyProposal(kind: 'short' | 'full'): Promise<void> {
 		if (!result) return;
 		const text = kind === 'short' ? result.proposalShort : result.proposalFull;
-		await navigator.clipboard.writeText(text);
+
+		await copyToClipboard(text);
+
 		setStatus(`Copied ${kind} proposal.`);
 	}
 
@@ -178,10 +174,12 @@ export default function App() {
 		<main className="side-root">
 			<div className="side-hero">
 				<h1>Upwork AI Assistant</h1>
-				<p>
-					Provider: <strong>{provider}</strong> &nbsp;|&nbsp;
+				<p className="flex-provider">
+					<span>
+						Provider: <strong>{provider}</strong>
+					</span>
 					<a href="#" onClick={openOptions}>
-						Settings
+						<strong>Settings</strong>
 					</a>
 				</p>
 			</div>
@@ -200,16 +198,16 @@ export default function App() {
 
 				<div className="side-row">
 					<button disabled={busy} onClick={() => void refreshJob()}>
-						Refresh
+						Refresh Job
 					</button>
 					<button disabled={busy || !job} onClick={() => void analyzeJob()}>
-						Analyze
+						Analyze Job
 					</button>
 					<button disabled={!result} onClick={() => void copyProposal('short')}>
-						Copy short
+						Copy Short Proposal
 					</button>
 					<button disabled={!result} onClick={() => void copyProposal('full')}>
-						Copy full
+						Copy Full Proposal
 					</button>
 				</div>
 

@@ -36,6 +36,9 @@ export default defineManifest({
 			js: ['src/content/main.tsx'],
 			matches: [
 				'https://www.upwork.com/nx/find-work/details/*',
+				'https://www.upwork.com/nx/find-work/best-matches/details/*',
+				'https://www.upwork.com/nx/find-work/most-recent/details/*',
+				'https://www.upwork.com/nx/find-work/*/details/*',
 				'https://www.upwork.com/jobs/*',
 			],
 			run_at: 'document_idle',
