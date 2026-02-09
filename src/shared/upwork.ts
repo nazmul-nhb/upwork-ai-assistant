@@ -1,4 +1,4 @@
-import { isString } from 'nhb-toolbox';
+import { isString, trimString, truncateString } from 'nhb-toolbox';
 import type { UpworkJob } from './types';
 
 export function extractUpworkJobFromDom(url: string): UpworkJob {
@@ -7,6 +7,7 @@ export function extractUpworkJobFromDom(url: string): UpworkJob {
 
 	const title = extractTitle(content);
 	const description = extractDescription(content);
+
 	const postedDate = extractPostedDate(content);
 	const jobLocation = extractJobLocation(content);
 	const { budgetText, experienceLevel, projectType } = extractFeatures(content);
@@ -43,8 +44,13 @@ export function extractUpworkJobFromDom(url: string): UpworkJob {
 // Helpers
 // ---------------------------------------------------------------------------
 
-function normalizeSpace(value: string): string {
-	return value.replace(/\s+/g, ' ').trim();
+function normalizeSpace(value: string, keepNewLine = false): string {
+	if (keepNewLine) {
+		// Replace multiple spaces with a single space, but preserve new lines
+		return value.replace(/[ \t]+/g, ' ').trim();
+	}
+
+	return trimString(value);
 }
 
 function extractTitle(content: HTMLElement | null): string {
@@ -98,14 +104,14 @@ function extractDescription(content: HTMLElement | null): string {
 	]) {
 		const el = (content ?? document).querySelector(sel) as HTMLElement | null;
 		if (el) {
-			const text = normalizeSpace(el.innerText);
+			const text = normalizeSpace(el.innerText, true);
 			if (text.length > 20) return text;
 		}
 	}
 	if (content) {
 		const section = content.querySelector('section') as HTMLElement | null;
-		if (section) return normalizeSpace(section.innerText);
-		return normalizeSpace(content.innerText);
+		if (section) return normalizeSpace(section.innerText, true);
+		return normalizeSpace(content.innerText, true);
 	}
 	return '';
 }
@@ -394,7 +400,7 @@ export function formatJobPreview(job: UpworkJob): string {
 		job.connectsAvailable ? `Available connects: ${job.connectsAvailable}` : '',
 		'',
 		// Client info
-		'Client Info',
+		'Client Info:',
 		job.clientPaymentVerified != null ?
 			`Payment verified: ${job.clientPaymentVerified ? 'Yes' : 'No'}`
 		:	'',
@@ -415,7 +421,7 @@ export function formatJobPreview(job: UpworkJob): string {
 		job.clientMemberSince ? `Member since: ${job.clientMemberSince}` : '',
 		'',
 		// Description (truncated)
-		job.description.slice(0, 1500) + (job.description.length > 1500 ? '\n...' : ''),
+		truncateString(job.description, 2000),
 	];
 
 	// Collapse consecutive empty strings into one blank line

@@ -10,6 +10,8 @@ export type UserMindset = {
 	redFlags: string[];
 };
 
+export type BuiltPrompt = { instructions: string; input: string };
+
 export type ProviderConfig = {
 	model: string;
 	apiKeyEncrypted?: string;

@@ -9,7 +9,14 @@ import type {
 	ExtensionSettings,
 	UpworkJob,
 } from '@/shared/types';
-import { isArrayOfType, isBoolean, isNumber, isObject, isString } from 'nhb-toolbox';
+import {
+	clampNumber,
+	isArrayOfType,
+	isBoolean,
+	isNumber,
+	isObject,
+	isString,
+} from 'nhb-toolbox';
 import { Cipher } from 'nhb-toolbox/hash';
 
 const JOB_URL_PATTERNS = [
@@ -64,22 +71,26 @@ const DEFAULT_SETTINGS: ExtensionSettings = {
 		secondarySkills: [
 			'Redux Toolkit',
 			'TanStack Query',
+			'Vue.js',
 			'Vite',
 			'Mongoose',
 			'NestJS',
 			'Zod',
 			'Docusaurus',
+			'Prisma',
+			'Drizzle',
 		],
 		noGoSkills: [
 			'Figma UI/UX design',
 			'WordPress page builders',
-			'Native mobile (Swift/Kotlin)',
+			'Mobile app development (React Native, Flutter, etc.)',
 		],
 		proposalStyleRules: [
 			'Be short and direct. No fluff.',
 			'Emphasize speed and precision with clear scope boundaries.',
 			'Ask 3-6 targeted questions.',
 			'If scope is vague, propose a small paid discovery first.',
+			'For Vue.js jobs, avoid complex sites, accepts only landing pages, or similar simple projects.',
 		],
 		redFlags: [
 			'Unrealistic deadlines with very low budget',
@@ -118,7 +129,7 @@ chrome.runtime.onMessage.addListener((msg: unknown, sender, sendResponse) => {
 
 	void handleMessage(msg as BgRequest)
 		.then(sendResponse)
-		.catch((error: unknown) => {
+		.catch((error) => {
 			if (error instanceof LlmProviderError) {
 				sendResponse({
 					ok: false,
@@ -320,7 +331,7 @@ function coerceAnalysis(value: unknown): AnalysisResult {
 
 	const object = value as Record<string, unknown>;
 	const shouldApply = asBoolean(object.shouldApply, 'shouldApply');
-	const fitScore = clamp(asNumber(object.fitScore, 'fitScore'), 0, 100);
+	const fitScore = clampNumber(asNumber(object.fitScore, 'fitScore'), 0, 100);
 
 	return {
 		shouldApply,
@@ -363,10 +374,6 @@ function asStringArray(value: unknown, field: string): string[] {
 		throw new Error(`AI output field ${field} must be string[].`);
 	}
 	return value;
-}
-
-function clamp(value: number, min: number, max: number): number {
-	return Math.max(min, Math.min(max, value));
 }
 
 function decryptProviderKey(encrypted: string, passphrase: string): string | null {
