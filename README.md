@@ -11,7 +11,7 @@ A Chrome/Edge browser extension that analyzes Upwork job postings in real time a
 - **Personalized mindset profile** — Configure your name, role, core/secondary skills, no-go skills, proposal style rules, and red flags. The AI tailors every response to your unique profile.
 - **Fit score and recommendations** — Receive a 0–100 fit score, key reasons to apply (or skip), identified risks, and a suggested bid amount.
 - **Dual proposal generation** — Get both a short (1–2 sentence) and full-length proposal, ready to paste into Upwork.
-- **Encrypted API key storage** — API keys are encrypted with a user-defined passphrase using AES before being stored. Keys never leave your browser in plaintext.
+- **Encrypted API key storage** — API keys are encrypted with a user-defined passphrase using custom HMAC-based encryption before being stored. Keys never leave your browser in plaintext.
 - **Session passphrase memory** — Optionally remember your passphrase for the current browser session using `chrome.storage.session` (memory-only, never written to disk).
 - **Side panel UI** — Full analysis workflow lives in the browser side panel — extract, review, analyze, and copy proposals without leaving the job page.
 - **Popup quick-access** — Lightweight popup for status checks, opening the side panel, or jumping to settings.
@@ -107,7 +107,7 @@ src/
 ├── shared/           # Shared modules
 │   ├── llm.ts        # LLM API client (OpenAI, Gemini, Grok)
 │   ├── prompt.ts     # Prompt builder (mindset + job → instructions)
-│   ├── storage.ts    # chrome.storage.local wrapper
+│   ├── storage.ts    # chrome.storage.local wrappers
 │   ├── types.ts      # TypeScript type definitions
 │   └── upwork.ts     # DOM extraction logic + preview formatter
 └── sidepanel/        # Side panel UI (main analysis workflow)
@@ -116,20 +116,20 @@ src/
 ### Key Design Decisions
 
 - **`chrome.scripting.executeScript` for extraction** — The primary extraction path injects a self-contained function directly into the page, bypassing the CRXJS content script loader which can fail silently in production builds. This ensures reliable extraction without page refreshes.
-- **Encrypted API keys** — Keys are AES-encrypted with the user's passphrase before storage. The passphrase is never persisted to disk — only optionally held in `chrome.storage.session` (cleared when the browser closes).
+- **Encrypted API keys** — Keys are encrypted (custom HMAC-based) with the user's passphrase before storage. The passphrase is never persisted to disk — only optionally held in `chrome.storage.session` (cleared when the browser closes).
 - **Manifest V3** — Uses a service worker background script, side panel API, and declarative content scripts following the latest Chrome extension standards.
 
 ## Tech Stack
 
-| Category         | Technology                                                                                                |
-| ---------------- | --------------------------------------------------------------------------------------------------------- |
-| **Framework**    | React 19 · TypeScript 5.9                                                                                 |
-| **Build**        | Vite 7 · CRXJS Vite Plugin                                                                                |
-| **Extension**    | Manifest V3 · Chrome Side Panel API                                                                       |
-| **AI Providers** | OpenAI · Google Gemini · Grok (xAI)                                                                       |
-| **Encryption**   | Custom MAC-based construction via [**Cipher**](https://toolbox.nazmul-nhb.dev/docs/utilities/hash/Cipher) |
-| **Linting**      | ESLint 10 · Prettier                                                                                      |
-| **CI/CD**        | GitHub Actions · Automated releases                                                                       |
+| Category         | Technology                                                                                                 |
+| ---------------- | ---------------------------------------------------------------------------------------------------------- |
+| **Framework**    | React 19 · TypeScript 5.9                                                                                  |
+| **Build**        | Vite 7 · CRXJS Vite Plugin                                                                                 |
+| **Extension**    | Manifest V3 · Chrome Side Panel API                                                                        |
+| **AI Providers** | OpenAI · Google Gemini · Grok (xAI)                                                                        |
+| **Encryption**   | Custom HMAC-based construction via [**Cipher**](https://toolbox.nazmul-nhb.dev/docs/utilities/hash/Cipher) |
+| **Linting**      | ESLint 10 · Prettier                                                                                       |
+| **CI/CD**        | GitHub Actions · Automated releases                                                                        |
 
 ## Scripts
 
@@ -144,7 +144,7 @@ src/
 
 - **No telemetry.** The extension does not collect or transmit any analytics or usage data.
 - **API calls stay between you and the provider.** Job data is sent only to the LLM provider you configure — nowhere else.
-- **API keys are encrypted at rest** using AES with your passphrase. The plaintext key exists only in memory during an active API call.
+- **API keys are encrypted at rest** using custom HMAC-based encryption with your passphrase. The plaintext key exists only in memory during an active API call.
 - **Session passphrase** uses `chrome.storage.session`, which is memory-only and automatically cleared when the browser session ends.
 - **No external servers.** There is no backend — all logic runs locally in your browser.
 
