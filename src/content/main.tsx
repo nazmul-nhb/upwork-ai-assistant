@@ -1,5 +1,5 @@
-import { extractUpworkJobFromDom } from '@/shared/upworkExtract';
 import type { ContentRequest, ContentResponse, ContentSnapshotMessage } from '@/shared/types';
+import { extractUpworkJobFromDom } from '@/shared/upworkExtract';
 
 function sendSnapshot(): void {
 	try {
@@ -16,6 +16,7 @@ chrome.runtime.onMessage.addListener((message: ContentRequest, _sender, sendResp
 
 	try {
 		const job = extractUpworkJobFromDom(location.href);
+
 		sendResponse({ ok: true, job } satisfies ContentResponse);
 	} catch (error) {
 		const text = error instanceof Error ? error.message : 'Unable to extract job.';
@@ -26,7 +27,7 @@ chrome.runtime.onMessage.addListener((message: ContentRequest, _sender, sendResp
 });
 
 sendSnapshot();
-
+console.log('hello');
 let lastUrl = location.href;
 setInterval(() => {
 	if (location.href !== lastUrl) {

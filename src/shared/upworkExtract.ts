@@ -6,6 +6,8 @@ export function extractUpworkJobFromDom(url: string): UpworkJob {
 	const title =
 		textFrom('.job-details-content h4') || textFrom('h1') || 'Job title cannot be parsed!';
 
+	console.log(title);
+
 	const description =
 		textFrom('[data-test="Description"]') ||
 		textFrom('[data-test="job-description"]') ||
@@ -31,8 +33,8 @@ export function extractUpworkJobFromDom(url: string): UpworkJob {
 }
 
 function textFrom(selector: string): string {
-	const element = content.querySelector(selector);
-	return normalizeSpace(element?.textContent?.trim() ?? '');
+	const element = document.querySelector(selector) as HTMLElement;
+	return normalizeSpace(element?.innerText?.trim() ?? '');
 }
 
 function normalizeSpace(value: string): string {

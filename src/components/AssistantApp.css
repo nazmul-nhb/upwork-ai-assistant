@@ -1,3 +1,16 @@
+/* hide increase and decrease arrows in number input fields */
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+	margin: 0;
+	appearance: none;
+	-webkit-appearance: none;
+}
+
+input[type='number'] {
+	appearance: textfield;
+	-webkit-appearance: textfield;
+}
+
 .assistant-root {
 	--bg-0: #090f1f;
 	--bg-1: #111a31;
