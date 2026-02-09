@@ -1,11 +1,4 @@
-import type {
-	BgRequest,
-	BgResponse,
-	ContentRequest,
-	ContentResponse,
-	ExtensionSettings,
-	UpworkJob,
-} from '@/shared/types';
+import type { BgRequest, BgResponse, ExtensionSettings, UpworkJob } from '@/shared/types';
 import { useEffect, useState } from 'react';
 import './App.css';
 
@@ -28,26 +21,24 @@ export default function App() {
 				setSettings(res.settings);
 			}
 
-			// Try to get the current job
-			const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-			const activeTab = tabs[0];
-			if (activeTab?.id) {
-				try {
-					const fromContent = (await chrome.tabs.sendMessage(activeTab.id, {
-						type: 'REQUEST_JOB_SNAPSHOT',
-					} satisfies ContentRequest)) as ContentResponse;
+			// Use chrome.scripting.executeScript via background to extract job
+			// data directly — this bypasses the CRXJS content-script loader.
+			const extractRes = (await chrome.runtime.sendMessage({
+				type: 'EXTRACT_FROM_TAB',
+			} satisfies BgRequest)) as BgResponse;
 
-					if (fromContent.ok) {
-						setJob(fromContent.job);
-						setStatus('Job detected on this page.');
-						return;
-					}
-				} catch {
-					// Content script not available on this page
-				}
+			if (extractRes.ok && extractRes.type === 'ACTIVE_JOB' && extractRes.job) {
+				setJob(extractRes.job);
+				setStatus('Job detected on this page.');
+				return;
 			}
 
-			setStatus('No Upwork job page detected.');
+			// extractRes.ok === false — show specific error
+			if (!extractRes.ok) {
+				setStatus(extractRes.error);
+			} else {
+				setStatus('No Upwork job page detected.');
+			}
 		} catch (error) {
 			setStatus(error instanceof Error ? error.message : 'Initialization failed.');
 		}

@@ -20,7 +20,7 @@ export default defineManifest({
 		page: 'src/options/index.html',
 		open_in_tab: true,
 	},
-	permissions: ['storage', 'tabs', 'sidePanel'],
+	permissions: ['storage', 'tabs', 'sidePanel', 'scripting'],
 	host_permissions: [
 		'https://www.upwork.com/*',
 		'https://api.openai.com/*',

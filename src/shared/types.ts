@@ -59,6 +59,7 @@ export type BgRequest =
 	| { type: 'GET_SETTINGS' }
 	| { type: 'SET_SETTINGS'; settings: ExtensionSettings }
 	| { type: 'GET_ACTIVE_JOB' }
+	| { type: 'EXTRACT_FROM_TAB' }
 	| { type: 'TEST_PROVIDER_CONNECTION'; passphrase?: string }
 	| { type: 'ANALYZE_JOB'; job: UpworkJob; passphrase?: string };
 

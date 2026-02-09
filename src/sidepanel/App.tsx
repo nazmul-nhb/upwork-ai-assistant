@@ -2,8 +2,6 @@ import type {
 	AnalysisResult,
 	BgRequest,
 	BgResponse,
-	ContentRequest,
-	ContentResponse,
 	ExtensionSettings,
 	LlmProvider,
 	UpworkJob,
@@ -81,36 +79,26 @@ export default function App() {
 		setErrorDetails(null);
 
 		try {
-			const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-			const activeTab = tabs[0];
-			if (!activeTab?.id) throw new Error('No active tab detected.');
+			// Use chrome.scripting.executeScript via background — bypasses CRXJS
+			// content-script loader entirely so it works even on first load.
+			const res = (await chrome.runtime.sendMessage({
+				type: 'EXTRACT_FROM_TAB',
+			} satisfies BgRequest)) as BgResponse;
 
-			let extracted: UpworkJob | null = null;
-
-			try {
-				const fromContent = (await chrome.tabs.sendMessage(activeTab.id, {
-					type: 'REQUEST_JOB_SNAPSHOT',
-				} satisfies ContentRequest)) as ContentResponse;
-
-				if (fromContent.ok) extracted = fromContent.job;
-			} catch {
-				// Content script not injected — fall back to cache
+			if (res.ok && res.type === 'ACTIVE_JOB' && res.job) {
+				setJob(res.job);
+				setStatus(
+					'Job extracted. Run Analyze to generate recommendation and proposal.'
+				);
+				return;
 			}
 
-			if (!extracted) {
-				const fromBg = (await chrome.runtime.sendMessage({
-					type: 'GET_ACTIVE_JOB',
-				} satisfies BgRequest)) as BgResponse;
-
-				if (fromBg.ok && fromBg.type === 'ACTIVE_JOB') extracted = fromBg.job;
+			// Show the specific error from the background
+			if (!res.ok) {
+				throw new Error(res.error);
 			}
 
-			if (!extracted) {
-				throw new Error('Open an Upwork job details page, then click Refresh.');
-			}
-
-			setJob(extracted);
-			setStatus('Job extracted. Run Analyze to generate recommendation and proposal.');
+			throw new Error('Open an Upwork job details page, then click Refresh.');
 		} catch (error) {
 			setJob(null);
 			setStatus(error instanceof Error ? error.message : 'Failed to refresh job.');

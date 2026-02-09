@@ -11,6 +11,13 @@ import type {
 } from '@/shared/types';
 import { Cipher } from 'nhb-toolbox/hash';
 
+const JOB_URL_PATTERNS = [
+	'https://www.upwork.com/jobs/*',
+	'https://www.upwork.com/nx/find-work/details/*',
+];
+
+const JOB_URL_REGEX = /upwork\.com\/(jobs\/|nx\/find-work\/details\/)/;
+
 const DEFAULT_SETTINGS: ExtensionSettings = {
 	activeProvider: 'openai',
 	rememberPassphrase: false,
@@ -84,6 +91,18 @@ const jobByTabId = new Map<number, UpworkJob>();
 chrome.runtime.onInstalled.addListener(() => {
 	// Do NOT set openPanelOnActionClick so the popup works normally.
 	void chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: false });
+
+	// Prime the cache for any already-open Upwork job tabs so the extension
+	// works immediately without requiring a page refresh after install/update.
+	void chrome.tabs.query({ url: JOB_URL_PATTERNS }).then((tabs) => {
+		for (const tab of tabs) {
+			if (tab.id != null) {
+				void extractJobViaScripting(tab.id).then((job) => {
+					if (job) jobByTabId.set(tab.id!, job);
+				});
+			}
+		}
+	});
 });
 
 chrome.runtime.onMessage.addListener((msg: unknown, sender, sendResponse) => {
@@ -134,6 +153,33 @@ async function handleMessage(request: BgRequest): Promise<BgResponse> {
 		const activeTabId = await getActiveTabId();
 		const job = activeTabId != null ? (jobByTabId.get(activeTabId) ?? null) : null;
 		return { ok: true, type: 'ACTIVE_JOB', job };
+	}
+
+	if (request.type === 'EXTRACT_FROM_TAB') {
+		const tabId = await getActiveTabId();
+		if (tabId == null) {
+			return { ok: false, error: 'No active tab found.' };
+		}
+
+		// Check URL first
+		const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+		if (!tab?.url || !JOB_URL_REGEX.test(tab.url)) {
+			return {
+				ok: false,
+				error: 'Navigate to an Upwork job details page first.',
+			};
+		}
+
+		const job = await extractJobViaScripting(tabId);
+		if (job) {
+			jobByTabId.set(tabId, job);
+			return { ok: true, type: 'ACTIVE_JOB', job };
+		}
+
+		return {
+			ok: false,
+			error: 'Could not extract job data from this page. The page may still be loading — try again in a moment.',
+		};
 	}
 
 	if (request.type === 'TEST_PROVIDER_CONNECTION') {
@@ -326,4 +372,160 @@ function decryptProviderKey(encrypted: string, passphrase: string): string | nul
 	} catch {
 		return null;
 	}
+}
+
+// ---------------------------------------------------------------------------
+// Programmatic extraction via chrome.scripting.executeScript
+// This bypasses the CRXJS content-script loader entirely, so it works even
+// when the module-based content script fails to initialise.
+// ---------------------------------------------------------------------------
+
+async function extractJobViaScripting(tabId: number): Promise<UpworkJob | null> {
+	try {
+		const [frame] = await chrome.scripting.executeScript({
+			target: { tabId },
+			func: extractJobFromPageDOM,
+		});
+
+		const raw = frame?.result;
+		if (
+			raw &&
+			typeof raw === 'object' &&
+			typeof (raw as Record<string, unknown>).title === 'string' &&
+			typeof (raw as Record<string, unknown>).description === 'string'
+		) {
+			return raw as UpworkJob;
+		}
+	} catch {
+		// scripting.executeScript can fail if the tab is about:blank, etc.
+	}
+	return null;
+}
+
+/**
+ * Self-contained extraction function injected into the page via
+ * chrome.scripting.executeScript. It MUST NOT reference any outer-scope
+ * variables — Chrome serialises the function body and runs it in isolation.
+ */
+function extractJobFromPageDOM() {
+	const normalizeSpace = (v: string) => v.replace(/\s+/g, ' ').trim();
+
+	const escapeRx = (v: string) => v.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+	const extractNuxt = (field: string): string => {
+		try {
+			const el = document.querySelector('#__NUXT_DATA__');
+			if (!el?.textContent) return '';
+			const data: unknown[] = JSON.parse(el.textContent);
+			for (let i = 0; i < data.length; i++) {
+				if (typeof data[i] === 'string' && data[i] === field) {
+					for (let j = i + 1; j < Math.min(i + 5, data.length); j++) {
+						if (typeof data[j] === 'string' && (data[j] as string).length > 3)
+							return data[j] as string;
+					}
+				}
+			}
+		} catch {
+			/* ignore */
+		}
+		return '';
+	};
+
+	const content = document.querySelector('.job-details-content') as HTMLElement | null;
+
+	// ---- Title ----
+	const extractTitle = (): string => {
+		const span = content?.querySelector('h4 span.flex-1') as HTMLElement | null;
+		if (span) return normalizeSpace(span.innerText);
+
+		const h4 = content?.querySelector('h4') as HTMLElement | null;
+		if (h4) return normalizeSpace(h4.innerText);
+
+		const nuxt = extractNuxt('title');
+		if (nuxt) return nuxt;
+
+		const h1 = document.querySelector('h1') as HTMLElement | null;
+		if (h1) return normalizeSpace(h1.innerText);
+
+		const cleaned = document.title.replace(/\s*[-|]\s*Upwork.*$/i, '').trim();
+		return cleaned || 'Job title cannot be parsed!';
+	};
+
+	const title = extractTitle();
+
+	// ---- Description ----
+	let description = '';
+	for (const sel of [
+		'[data-test="Description"]',
+		'[data-test="job-description"]',
+		'.job-description',
+	]) {
+		const el = (content ?? document).querySelector(sel) as HTMLElement | null;
+		if (el) {
+			const t = normalizeSpace(el.innerText);
+			if (t.length > 20) {
+				description = t;
+				break;
+			}
+		}
+	}
+	if (!description && content) {
+		const sec = content.querySelector('section') as HTMLElement | null;
+		description = normalizeSpace(sec ? sec.innerText : content.innerText);
+	}
+
+	// ---- Labeled values ----
+	const findLabeled = (labels: string[]): string => {
+		const text = content?.innerText ?? '';
+		if (!text) return '';
+		for (const label of labels) {
+			const re = new RegExp(`${escapeRx(label)}\\s*[:\\n]\\s*([^\\n]+)`, 'i');
+			const m = text.match(re);
+			if (m?.[1]) return normalizeSpace(m[1]);
+		}
+		return '';
+	};
+
+	// ---- Skills ----
+	const root = content ?? document;
+	const tags = Array.from(root.querySelectorAll('[data-test="skill"]'))
+		.map((el) => normalizeSpace(el.textContent ?? ''))
+		.filter(Boolean);
+	let skills: string[] | undefined;
+	if (tags.length) {
+		skills = [...new Set(tags)];
+	} else {
+		const m = (content?.innerText ?? '').match(/Skills\s*[:\n]\s*([^\n]+)/i);
+		if (m?.[1]) {
+			const parts = m[1]
+				.split(',')
+				.map((p) => normalizeSpace(p))
+				.filter(Boolean);
+			if (parts.length) skills = [...new Set(parts)];
+		}
+	}
+
+	// ---- Client history ----
+	let clientHistorySummary = '';
+	const allText = content?.innerText ?? '';
+	if (allText) {
+		const lines = allText
+			.split('\n')
+			.map((l) => normalizeSpace(l))
+			.filter(Boolean);
+		const idx = lines.findIndex((l) => /client|history|reviews|spent|hires/i.test(l));
+		if (idx >= 0) clientHistorySummary = lines.slice(idx, idx + 6).join(' | ');
+	}
+
+	return {
+		url: location.href,
+		title,
+		description,
+		budgetText: findLabeled(['Budget', 'Hourly Range', 'Fixed-price']),
+		experienceLevel: findLabeled(['Experience level', 'Experience Level']),
+		projectType: findLabeled(['Project type', 'Project Type']),
+		skills,
+		clientLocation: findLabeled(['Location']),
+		clientHistorySummary,
+	};
 }

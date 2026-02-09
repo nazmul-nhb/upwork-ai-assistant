@@ -6,12 +6,9 @@ export function extractUpworkJobFromDom(url: string): UpworkJob {
 	const title = extractTitle(content);
 	const description = extractDescription(content);
 
-	const budgetText =
-		findLabeledValue(content, ['Budget', 'Hourly Range', 'Fixed-price']) || undefined;
-	const experienceLevel =
-		findLabeledValue(content, ['Experience level', 'Experience Level']) || undefined;
-	const projectType =
-		findLabeledValue(content, ['Project type', 'Project Type']) || undefined;
+	const budgetText = findLabeledValue(content, ['Budget', 'Hourly Range', 'Fixed-price']);
+	const experienceLevel = findLabeledValue(content, ['Experience level', 'Experience Level']);
+	const projectType = findLabeledValue(content, ['Project type', 'Project Type']);
 
 	return {
 		url,
@@ -21,8 +18,8 @@ export function extractUpworkJobFromDom(url: string): UpworkJob {
 		experienceLevel,
 		projectType,
 		skills: extractSkills(content),
-		clientLocation: findLabeledValue(content, ['Location']) || undefined,
-		clientHistorySummary: extractClientHistorySummary(content) || undefined,
+		clientLocation: findLabeledValue(content, ['Location']),
+		clientHistorySummary: extractClientHistorySummary(content),
 	};
 }
 
