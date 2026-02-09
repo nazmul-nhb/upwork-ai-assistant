@@ -16,11 +16,25 @@ export default defineManifest({
 		},
 		default_popup: 'src/popup/index.html',
 	},
-	permissions: ['sidePanel', 'contentSettings'],
+	permissions: ['storage', 'tabs', 'sidePanel'],
+	host_permissions: [
+		'https://www.upwork.com/*',
+		'https://api.openai.com/*',
+		'https://generativelanguage.googleapis.com/*',
+		'https://api.x.ai/*',
+	],
+	background: {
+		service_worker: 'src/background/index.ts',
+		type: 'module',
+	},
 	content_scripts: [
 		{
 			js: ['src/content/main.tsx'],
-			matches: ['https://*/*'],
+			matches: [
+				'https://www.upwork.com/nx/find-work/details/*',
+				'https://www.upwork.com/jobs/*',
+			],
+			run_at: 'document_idle',
 		},
 	],
 	side_panel: {
