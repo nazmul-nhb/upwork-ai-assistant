@@ -212,10 +212,13 @@ export default function SidePanel() {
 				disabled={!result}
 				onClick={async () => {
 					if (!result) return;
+
 					const text = kind === 'short' ? result.proposalShort : result.proposalFull;
 
 					setLastCopied(kind);
+
 					await copyToClipboard(text, `Copied ${kind} proposal.`);
+
 					setTimeout(() => setLastCopied(null), 2000);
 				}}
 			>
@@ -284,7 +287,7 @@ export default function SidePanel() {
 				</div>
 
 				<div className="side-row">
-					<button disside-rowabled={busy} onClick={() => void refreshJob()}>
+					<button disabled={busy} onClick={() => void refreshJob()}>
 						{busy ? 'Working...' : 'Refresh Job'}
 					</button>
 					<button disabled={busy || !job} onClick={() => void analyzeJob()}>

@@ -1,3 +1,4 @@
+import { clampNumber } from 'nhb-toolbox';
 import './App.css';
 
 import type { BgRequest, BgResponse, ExtensionSettings, LLMProvider } from '@/shared/types';
@@ -241,7 +242,7 @@ export default function Options() {
 										...settings.providers,
 										[activeProvider]: {
 											...providerConfig,
-											temperature: clamp(
+											temperature: clampNumber(
 												parseNum(e.target.value, 0.2),
 												0,
 												2
@@ -503,8 +504,4 @@ function splitLines(value: string): string[] {
 function parseNum(value: string, fallback: number): number {
 	const n = Number(value);
 	return Number.isFinite(n) ? n : fallback;
-}
-
-function clamp(value: number, min: number, max: number): number {
-	return Math.max(min, Math.min(max, value));
 }

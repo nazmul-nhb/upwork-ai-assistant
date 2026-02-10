@@ -83,7 +83,7 @@ Each provider supports:
 
 - **Model** — e.g., `gpt-5.2`, `gemini-2.5-flash`, `grok-3-latest`
 - **Base URL** — API endpoint (pre-filled with defaults)
-- **Temperature** — Controls response creativity (0.0–1.0)
+- **Temperature** — Controls response creativity (0.0–2.0)
 - **Max Output Tokens** — Upper limit on response length
 
 ## Usage

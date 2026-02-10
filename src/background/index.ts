@@ -123,6 +123,11 @@ chrome.runtime.onInstalled.addListener(() => {
 	});
 });
 
+// Clean up job cache when tabs are closed to prevent memory leaks
+chrome.tabs.onRemoved.addListener((tabId) => {
+	jobByTabId.delete(tabId);
+});
+
 chrome.runtime.onMessage.addListener((msg: unknown, sender, sendResponse) => {
 	if (isContentSnapshotMessage(msg) && sender.tab?.id != null) {
 		jobByTabId.set(sender.tab.id, msg.job);
