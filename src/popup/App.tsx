@@ -84,7 +84,12 @@ export default function PopUp() {
 			</section>
 
 			<div className="popup-actions">
-				<button onClick={openSidePanel}>Job Actions</button>
+				<button
+					disabled={status !== 'Job detected on this page.'}
+					onClick={openSidePanel}
+				>
+					Job Actions
+				</button>
 				<button className="btn-secondary" onClick={openOptions}>
 					&#x2699; Settings
 				</button>

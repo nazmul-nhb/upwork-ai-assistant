@@ -70,3 +70,8 @@
 	background: rgba(15, 24, 48, 0.8);
 	border-color: rgba(127, 157, 255, 0.35);
 }
+
+button:disabled {
+	opacity: 0.45;
+	cursor: not-allowed;
+}
