@@ -93,10 +93,11 @@ Each provider supports:
 3. The job data is automatically extracted and displayed as a preview.
 4. Enter your passphrase (or enable "Remember passphrase for this session").
 5. Click **Refresh Job** to re-extract if needed (e.g., after a page update or if the initial extraction failed).
-6. Click **Analyze Job** — the AI processes the job against your profile.
+6. Click **Analyze Job** to send the data to your configured LLM provider and receive the analysis results.
 7. Review the fit score, reasons, risks, questions, and proposals.
 8. Click **Copy Short Proposal** or **Copy Full Proposal** to clipboard.
 9. Click **Copy Prompt** to use tailored instructions for manual LLM queries.
+10. Click **Copy Job Details** to copy the full job preview for your own use.
 
 ## Architecture
 

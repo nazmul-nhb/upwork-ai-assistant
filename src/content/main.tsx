@@ -28,65 +28,21 @@ chrome.runtime.onMessage.addListener((message: ContentRequest, _sender, sendResp
 // Initial snapshot on page load
 sendSnapshot();
 
-// Watch for SPA-style navigation changes
+// Watch for SPA navigation - lightweight event-based approach
 let lastUrl = location.href;
-const navigationObserver = new PerformanceObserver((list) => {
-	for (const entry of list.getEntries()) {
-		if (entry.entryType === 'navigation' || location.href !== lastUrl) {
-			lastUrl = location.href;
-			sendSnapshot();
-			break;
-		}
-	}
-});
 
-// Use PerformanceObserver for modern browsers
-try {
-	navigationObserver.observe({ entryTypes: ['navigation'] });
-} catch {
-	// Fallback: listen to popstate and hashchange events
-	window.addEventListener('popstate', () => {
-		if (location.href !== lastUrl) {
-			lastUrl = location.href;
-			sendSnapshot();
-		}
-	});
-}
-
-// Fallback polling with much longer interval (only as last resort)
-// and cleanup when page is hidden
-let pollInterval: number | null = setInterval(() => {
+// Listen to browser navigation events (back/forward buttons)
+window.addEventListener('popstate', () => {
 	if (location.href !== lastUrl) {
 		lastUrl = location.href;
 		sendSnapshot();
 	}
-}, 5000); // Increased to 5 seconds
+});
 
-// Clean up resources when page is being unloaded or hidden
-const cleanup = () => {
-	if (pollInterval) {
-		clearInterval(pollInterval);
-		pollInterval = null;
-	}
-	try {
-		navigationObserver.disconnect();
-	} catch {
-		// Ignore if not started
-	}
-};
-
-window.addEventListener('beforeunload', cleanup);
-document.addEventListener('visibilitychange', () => {
-	if (document.hidden && pollInterval) {
-		clearInterval(pollInterval);
-		pollInterval = null;
-	} else if (!document.hidden && pollInterval === null) {
-		// Resume polling when page becomes visible again
-		pollInterval = setInterval(() => {
-			if (location.href !== lastUrl) {
-				lastUrl = location.href;
-				sendSnapshot();
-			}
-		}, 5000);
+// Listen to hash changes
+window.addEventListener('hashchange', () => {
+	if (location.href !== lastUrl) {
+		lastUrl = location.href;
+		sendSnapshot();
 	}
 });

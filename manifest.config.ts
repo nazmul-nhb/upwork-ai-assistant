@@ -8,7 +8,11 @@ export default defineManifest({
 	version: pkg.version,
 	author: pkg.author,
 	icons: {
+		16: 'public/icon.png',
+		32: 'public/icon.png',
 		48: 'public/icon.png',
+		128: 'public/icon.png',
+		256: 'public/icon.png',
 	},
 	action: {
 		default_title: 'Upwork AI Assistant',

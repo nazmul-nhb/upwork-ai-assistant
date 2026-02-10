@@ -836,6 +836,34 @@ function extractJobFromPageDOM(): UpworkJob {
 		return result;
 	}
 
+	function extractQuestionList(): string[] {
+		const result: string[] = [];
+
+		if (content) {
+			const markerText =
+				'You will be asked to answer the following questions when submitting a proposal';
+
+			const markerP = [...content.querySelectorAll('p')].find((p) =>
+				p.textContent?.includes(markerText)
+			);
+
+			if (!markerP) return [];
+
+			const ol =
+				markerP.nextElementSibling instanceof HTMLOListElement ?
+					markerP.nextElementSibling
+				:	(markerP.parentElement?.querySelector('ol') ?? null);
+
+			if (!ol) return [];
+
+			[...ol.querySelectorAll('li')].forEach((li) => {
+				result.push(li.textContent?.trim().replace(/\s+/g, ' ') ?? '');
+			});
+		}
+
+		return result;
+	}
+
 	const title = extractTitle();
 	const description = extractDescription();
 	const postedDate = extractPostedDate();
@@ -847,6 +875,7 @@ function extractJobFromPageDOM(): UpworkJob {
 	const { connectsRequired, connectsAvailable } = extractConnects();
 	const client = extractClient();
 	const preferredQualifications = extractPreferredQualifications();
+	const requiredQuestions = extractQuestionList();
 
 	return {
 		url: location.href,
@@ -872,6 +901,7 @@ function extractJobFromPageDOM(): UpworkJob {
 		connectsAvailable: connectsAvailable || undefined,
 		preferredQualifications:
 			preferredQualifications.length > 0 ? preferredQualifications : undefined,
+		requiredQuestions: requiredQuestions.length > 0 ? requiredQuestions : undefined,
 		...client,
 	};
 }

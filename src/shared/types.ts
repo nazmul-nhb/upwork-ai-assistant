@@ -75,6 +75,7 @@ export type UpworkJob = {
 	clientCompanySize?: string;
 	clientMemberSince?: string;
 	preferredQualifications?: string[];
+	requiredQuestions?: string[];
 };
 
 export type AnalysisResult = {

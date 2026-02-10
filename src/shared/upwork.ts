@@ -17,6 +17,7 @@ export function extractUpworkJobFromDom(url: string): UpworkJob {
 	const { connectsRequired, connectsAvailable } = extractConnects(sidebar ?? content);
 	const client = extractClient(sidebar ?? content);
 	const preferredQualifications = extractPreferredQualifications(content);
+	const requiredQuestions = extractQuestionList(content);
 
 	return {
 		url,
@@ -42,6 +43,7 @@ export function extractUpworkJobFromDom(url: string): UpworkJob {
 		connectsAvailable: connectsAvailable || undefined,
 		preferredQualifications:
 			preferredQualifications.length > 0 ? preferredQualifications : undefined,
+		requiredQuestions: requiredQuestions.length > 0 ? requiredQuestions : undefined,
 		...client,
 	};
 }
@@ -264,6 +266,34 @@ function extractConnects(container: HTMLElement | null) {
 	return { connectsRequired, connectsAvailable };
 }
 
+function extractQuestionList(content: HTMLElement | null): string[] {
+	const result: string[] = [];
+
+	if (content) {
+		const markerText =
+			'You will be asked to answer the following questions when submitting a proposal';
+
+		const markerP = [...content.querySelectorAll('p')].find((p) =>
+			p.textContent?.includes(markerText)
+		);
+
+		if (!markerP) return [];
+
+		const ol =
+			markerP.nextElementSibling instanceof HTMLOListElement ?
+				markerP.nextElementSibling
+			:	(markerP.parentElement?.querySelector('ol') ?? null);
+
+		if (!ol) return [];
+
+		[...ol.querySelectorAll('li')].forEach((li) => {
+			result.push(li.textContent?.trim().replace(/\s+/g, ' ') ?? '');
+		});
+	}
+
+	return result;
+}
+
 function extractClient(container: HTMLElement | null) {
 	const aboutClient = container?.querySelector(
 		'[data-test="about-client-container"], .cfe-ui-job-about-client'
@@ -395,7 +425,7 @@ function extractFromNuxtData(field: string): string {
 }
 
 /** Helper to format a job into a human-readable preview string. */
-export function formatJobPreview(job: UpworkJob): string {
+export function formatJobPreview(job: UpworkJob, truncateDetails = true): string {
 	const lines: string[] = [
 		`Title: ${job.title}`,
 		job.postedDate ? `Posted: ${job.postedDate}` : '',
@@ -440,11 +470,15 @@ export function formatJobPreview(job: UpworkJob): string {
 		job.clientMemberSince ? `Member since: ${job.clientMemberSince}` : '',
 		'',
 		job.preferredQualifications ?
-			`Preferred qualifications:\n${job.preferredQualifications.join('; ')}`
+			`Preferred qualifications:\n${job.preferredQualifications.join(';\n')}`
+		:	'',
+		'',
+		job.requiredQuestions ?
+			`Required questions to answer when submitting a proposal:\n - ${job.requiredQuestions.join('\n - ')}`
 		:	'',
 		'',
 		// Description (truncated)
-		truncateString(job.description, 3072),
+		truncateDetails ? truncateString(job.description, 3072) : job.description,
 	];
 
 	// Collapse consecutive empty strings into one blank line

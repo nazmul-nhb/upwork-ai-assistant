@@ -29,7 +29,7 @@ export default function SidePanel() {
 	const [status, setStatus] = useState('Loading...');
 	const [errorDetails, setErrorDetails] = useState<ErrorDetails | null>(null);
 	const [busy, setBusy] = useState(false);
-	const [lastCopied, setLastCopied] = useState<'prompt' | ProposalKind | null>(null);
+	const [lastCopied, setLastCopied] = useState<'job' | 'prompt' | ProposalKind | null>(null);
 
 	const { copiedText, copyToClipboard } = useCopyText({
 		onSuccess: (text) => {
@@ -107,7 +107,7 @@ export default function SidePanel() {
 			if (res.ok && res.type === 'ACTIVE_JOB' && res.job) {
 				setJob(res.job);
 				setStatus(
-					'Job extracted. Run Analyze to generate recommendation and proposal.'
+					'Job extracted. Run "Analyze Job" to generate recommendation and proposal.'
 				);
 				return;
 			}
@@ -181,6 +181,14 @@ export default function SidePanel() {
 		setTimeout(() => setLastCopied(null), 2000);
 	}
 
+	async function copyJobDetails() {
+		if (!job) return;
+
+		setLastCopied('job');
+		await copyToClipboard(formatJobPreview(job, false), 'Copied job details to clipboard.');
+		setTimeout(() => setLastCopied(null), 2000);
+	}
+
 	function consumeError(response: Extract<BgResponse, { ok: false }>, context: string): void {
 		const prov = response.provider ? `${response.provider.toUpperCase()} ` : '';
 		const code = response.statusCode ? `(${response.statusCode}) ` : '';
@@ -251,7 +259,7 @@ export default function SidePanel() {
 						type="password"
 						value={passphrase}
 						onChange={(e) => setPassphrase(e.target.value)}
-						placeholder="To decrypt your API key"
+						placeholder="Passphrase to decrypt your API key"
 					/>
 				</label>
 
@@ -298,6 +306,11 @@ export default function SidePanel() {
 							'Prompt Copied!'
 						:	'Copy Prompt'}
 					</button>
+					<button disabled={busy || !job} onClick={() => void copyJobDetails()}>
+						{copiedText && lastCopied === 'job' ?
+							'Job Details Copied!'
+						:	'Copy Job Details'}
+					</button>
 					<CopyProposal kind="short" />
 					<CopyProposal kind="full" />
 				</div>
@@ -307,7 +320,7 @@ export default function SidePanel() {
 
 			{/* Job Preview */}
 			<section className="side-card">
-				<h2>Job Preview</h2>
+				<h2>Job Details Preview</h2>
 				<pre>{jobPreview || 'No job preview available.'}</pre>
 			</section>
 
@@ -318,7 +331,7 @@ export default function SidePanel() {
 					<div className="side-result">
 						<p>
 							<strong>Apply:</strong> {result.shouldApply ? 'YES' : 'NO'} |{' '}
-							<strong>Fit:</strong> {result.fitScore}/100
+							<strong>Fit:</strong> {result.fitScore}%
 						</p>
 
 						<strong>Reasons</strong>
