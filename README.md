@@ -89,7 +89,7 @@ Each provider supports:
 ## Usage
 
 1. Navigate to any Upwork job details page.
-2. Click the extension icon → **Open Side Panel**.
+2. Click the extension icon → **Job Actions** to open the side panel.
 3. The job data is automatically extracted and displayed as a preview.
 4. Enter your passphrase (or enable "Remember passphrase for this session").
 5. Click **Refresh Job** to re-extract if needed (e.g., after a page update or if the initial extraction failed).

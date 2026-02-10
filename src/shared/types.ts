@@ -96,6 +96,24 @@ export type ErrorDetails = {
 	payload?: string;
 };
 
+export type LLMErrorParams = {
+	provider: LLMProvider;
+	message: string;
+	statusCode?: number;
+	rawError?: string;
+};
+
+export type LLMRequest = {
+	provider: LLMProvider;
+	apiKey: string;
+	model: string;
+	instructions: string;
+	input: string;
+	baseUrl?: string;
+	temperature?: number;
+	maxOutputTokens?: number;
+};
+
 export type BgRequest =
 	| { type: 'PING' }
 	| { type: 'GET_SETTINGS' }

@@ -84,9 +84,9 @@ export default function PopUp() {
 			</section>
 
 			<div className="popup-actions">
-				<button onClick={openSidePanel}>Open Side Panel</button>
+				<button onClick={openSidePanel}>Job Actions</button>
 				<button className="btn-secondary" onClick={openOptions}>
-					Settings
+					&#x2699; Settings
 				</button>
 			</div>
 		</main>

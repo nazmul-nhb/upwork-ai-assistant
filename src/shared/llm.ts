@@ -7,39 +7,23 @@ import {
 	isString,
 	isValidArray,
 } from 'nhb-toolbox';
-import type { LLMProvider } from './types';
+import type { LLMErrorParams, LLMProvider, LLMRequest } from './types';
 
-export type LlmRequest = {
-	provider: LLMProvider;
-	apiKey: string;
-	model: string;
-	instructions: string;
-	input: string;
-	baseUrl?: string;
-	temperature?: number;
-	maxOutputTokens?: number;
-};
-
-export class LlmProviderError extends Error {
+export class LLMProviderError extends Error {
 	provider: LLMProvider;
 	statusCode?: number;
 	rawError?: string;
 
-	constructor(params: {
-		provider: LLMProvider;
-		message: string;
-		statusCode?: number;
-		rawError?: string;
-	}) {
+	constructor(params: LLMErrorParams) {
 		super(params.message);
-		this.name = 'LlmProviderError';
+		this.name = 'LLMProviderError';
 		this.provider = params.provider;
 		this.statusCode = params.statusCode;
 		this.rawError = params.rawError;
 	}
 }
 
-export async function callLlmJson(request: LlmRequest): Promise<string> {
+export async function callLlmJson(request: LLMRequest): Promise<string> {
 	switch (request.provider) {
 		case 'openai':
 			return callOpenAI(request);
@@ -48,13 +32,11 @@ export async function callLlmJson(request: LlmRequest): Promise<string> {
 		case 'grok':
 			return callGrok(request);
 		default:
-			throw new Error(
-				`Unsupported provider: ${(request as { provider: string }).provider}`
-			);
+			throw new Error(`Unsupported provider: ${request.provider satisfies never}`);
 	}
 }
 
-async function callOpenAI(request: LlmRequest): Promise<string> {
+async function callOpenAI(request: LLMRequest): Promise<string> {
 	const endpoint = request.baseUrl?.trim() || 'https://api.openai.com/v1/responses';
 
 	const response = await fetch(endpoint, {
@@ -75,7 +57,7 @@ async function callOpenAI(request: LlmRequest): Promise<string> {
 
 	if (!response.ok) {
 		const raw = await safeReadText(response);
-		throw new LlmProviderError({
+		throw new LLMProviderError({
 			provider: 'openai',
 			statusCode: response.status,
 			rawError: raw,
@@ -87,7 +69,7 @@ async function callOpenAI(request: LlmRequest): Promise<string> {
 	return extractOpenAiText(data);
 }
 
-async function callGemini(request: LlmRequest): Promise<string> {
+async function callGemini(request: LLMRequest): Promise<string> {
 	const base = request.baseUrl?.trim() || 'https://generativelanguage.googleapis.com/v1beta';
 	const endpoint = `${base.replace(/\/$/, '')}/models/${encodeURIComponent(request.model)}:generateContent?key=${encodeURIComponent(request.apiKey)}`;
 
@@ -112,7 +94,7 @@ async function callGemini(request: LlmRequest): Promise<string> {
 
 	if (!response.ok) {
 		const raw = await safeReadText(response);
-		throw new LlmProviderError({
+		throw new LLMProviderError({
 			provider: 'gemini',
 			statusCode: response.status,
 			rawError: raw,
@@ -123,7 +105,7 @@ async function callGemini(request: LlmRequest): Promise<string> {
 	const data = (await response.json()) as Record<string, unknown>;
 	const candidates = data.candidates;
 	if (!isValidArray<Record<string, unknown>>(candidates)) {
-		throw new LlmProviderError({
+		throw new LLMProviderError({
 			provider: 'gemini',
 			message: 'Gemini returned no candidates.',
 			rawError: JSON.stringify(data),
@@ -133,7 +115,7 @@ async function callGemini(request: LlmRequest): Promise<string> {
 	const first = candidates[0];
 	const finishReason = first.finishReason;
 	if (finishReason === 'MAX_TOKENS') {
-		throw new LlmProviderError({
+		throw new LLMProviderError({
 			provider: 'gemini',
 			message:
 				'Gemini output was truncated at max tokens. Increase Max output tokens in provider settings.',
@@ -145,7 +127,7 @@ async function callGemini(request: LlmRequest): Promise<string> {
 	const parts = content?.parts;
 
 	if (!Array.isArray(parts)) {
-		throw new LlmProviderError({
+		throw new LLMProviderError({
 			provider: 'gemini',
 			message: 'Gemini response missing content parts.',
 			rawError: JSON.stringify(data),
@@ -159,7 +141,7 @@ async function callGemini(request: LlmRequest): Promise<string> {
 		.trim();
 
 	if (!text) {
-		throw new LlmProviderError({
+		throw new LLMProviderError({
 			provider: 'gemini',
 			message: 'Gemini response text is empty.',
 			rawError: JSON.stringify(data),
@@ -169,7 +151,7 @@ async function callGemini(request: LlmRequest): Promise<string> {
 	return text;
 }
 
-async function callGrok(request: LlmRequest): Promise<string> {
+async function callGrok(request: LLMRequest): Promise<string> {
 	const endpoint = request.baseUrl?.trim() || 'https://api.x.ai/v1/chat/completions';
 
 	const response = await fetch(endpoint, {
@@ -191,7 +173,7 @@ async function callGrok(request: LlmRequest): Promise<string> {
 
 	if (!response.ok) {
 		const raw = await safeReadText(response);
-		throw new LlmProviderError({
+		throw new LLMProviderError({
 			provider: 'grok',
 			statusCode: response.status,
 			rawError: raw,
@@ -201,20 +183,19 @@ async function callGrok(request: LlmRequest): Promise<string> {
 
 	const data = (await response.json()) as Record<string, unknown>;
 	const choices = data.choices;
-	if (!Array.isArray(choices) || choices.length === 0) {
-		throw new LlmProviderError({
+	if (!isValidArray<Record<string, unknown>>(choices)) {
+		throw new LLMProviderError({
 			provider: 'grok',
 			message: 'Grok response missing choices.',
 			rawError: JSON.stringify(data),
 		});
 	}
 
-	const first = choices[0] as Record<string, unknown>;
-	const message = first.message as Record<string, unknown>;
+	const message = choices[0].message as Record<string, unknown>;
 	const content = message?.content;
 
 	if (!isString(content) || !content.trim()) {
-		throw new LlmProviderError({
+		throw new LLMProviderError({
 			provider: 'grok',
 			message: 'Grok response content is empty.',
 			rawError: JSON.stringify(data),

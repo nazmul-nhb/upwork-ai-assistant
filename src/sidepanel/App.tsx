@@ -246,7 +246,7 @@ export default function SidePanel() {
 						Provider: <strong>{provider}</strong>
 					</span>
 					<a href="#" onClick={openOptions}>
-						<strong>Settings</strong>
+						<strong>&#x2699; Settings</strong>
 					</a>
 				</p>
 			</div>

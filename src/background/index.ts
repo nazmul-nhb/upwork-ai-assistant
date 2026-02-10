@@ -1,4 +1,4 @@
-import { callLlmJson, LlmProviderError } from '@/shared/llm';
+import { callLlmJson, LLMProviderError } from '@/shared/llm';
 import { buildPrompt } from '@/shared/prompt';
 import { loadSettings, saveSettings } from '@/shared/storage';
 import type {
@@ -138,7 +138,7 @@ chrome.runtime.onMessage.addListener((msg: unknown, sender, sendResponse) => {
 	void handleMessage(msg as BgRequest)
 		.then(sendResponse)
 		.catch((error) => {
-			if (error instanceof LlmProviderError) {
+			if (error instanceof LLMProviderError) {
 				sendResponse({
 					ok: false,
 					error: error.message,
@@ -290,7 +290,7 @@ async function handleMessage(request: BgRequest): Promise<BgResponse> {
 		try {
 			parsed = strictJsonObject(rawResponse);
 		} catch {
-			throw new LlmProviderError({
+			throw new LLMProviderError({
 				provider,
 				message:
 					'Model output was not valid JSON. Try increasing Max output tokens or simplifying the prompt.',
