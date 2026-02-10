@@ -29,7 +29,9 @@ export default function SidePanel() {
 	const [status, setStatus] = useState('Loading...');
 	const [errorDetails, setErrorDetails] = useState<ErrorDetails | null>(null);
 	const [busy, setBusy] = useState(false);
-	const [lastCopied, setLastCopied] = useState<'job' | 'prompt' | ProposalKind | null>(null);
+	const [lastCopied, setLastCopied] = useState<
+		'job' | 'prompt' | 'questions' | ProposalKind | null
+	>(null);
 
 	const { copiedText, copyToClipboard } = useCopyText({
 		onSuccess: (text) => {
@@ -189,6 +191,12 @@ export default function SidePanel() {
 		setTimeout(() => setLastCopied(null), 2000);
 	}
 
+	async function copyQuestions(questions: string[]) {
+		setLastCopied('questions');
+		await copyToClipboard(`- ${questions.join('\n- ')}`, 'Copied questions to clipboard.');
+		setTimeout(() => setLastCopied(null), 2000);
+	}
+
 	function consumeError(response: Extract<BgResponse, { ok: false }>, context: string): void {
 		const prov = response.provider ? `${response.provider.toUpperCase()} ` : '';
 		const code = response.statusCode ? `(${response.statusCode}) ` : '';
@@ -301,16 +309,6 @@ export default function SidePanel() {
 					<button disabled={busy || !job} onClick={() => void analyzeJob()}>
 						{busy ? 'Working...' : 'Analyze Job'}
 					</button>
-					<button disabled={busy || !job} onClick={() => void copyPrompt()}>
-						{copiedText && lastCopied === 'prompt' ?
-							'Prompt Copied!'
-						:	'Copy Prompt'}
-					</button>
-					<button disabled={busy || !job} onClick={() => void copyJobDetails()}>
-						{copiedText && lastCopied === 'job' ?
-							'Job Details Copied!'
-						:	'Copy Job Details'}
-					</button>
 					<CopyProposal kind="short" />
 					<CopyProposal kind="full" />
 				</div>
@@ -321,6 +319,18 @@ export default function SidePanel() {
 			{/* Job Preview */}
 			<section className="side-card">
 				<h2>Job Details Preview</h2>
+				<div className="flex-provider">
+					<button disabled={busy || !job} onClick={() => void copyPrompt()}>
+						{copiedText && lastCopied === 'prompt' ?
+							'Prompt Copied!'
+						:	'Copy Prompt'}
+					</button>
+					<button disabled={busy || !job} onClick={() => void copyJobDetails()}>
+						{copiedText && lastCopied === 'job' ?
+							'Job Details Copied!'
+						:	'Copy Job Details'}
+					</button>
+				</div>
 				<pre>{jobPreview || 'No job preview available.'}</pre>
 			</section>
 
@@ -348,7 +358,17 @@ export default function SidePanel() {
 							))}
 						</ul>
 
-						<strong>Questions to ask</strong>
+						<div className="flex-provider">
+							<strong>Questions to ask</strong>{' '}
+							<button
+								disabled={!result.questionsToAsk.length || busy}
+								onClick={() => void copyQuestions(result.questionsToAsk)}
+							>
+								{copiedText && lastCopied === 'questions' ?
+									'Questions Copied!'
+								:	'Copy Questions'}
+							</button>
+						</div>
 						<ul>
 							{result.questionsToAsk.map((item, i) => (
 								<li key={`q-${i}`}>{item}</li>

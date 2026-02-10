@@ -54,7 +54,7 @@
 	margin: 0;
 	font-size: 14px;
 	font-weight: 700;
-	padding-bottom: 4px;
+	padding-bottom: 6px;
 	border-bottom: 1px solid rgba(141, 167, 255, 0.25);
 }
 
@@ -180,6 +180,7 @@
 .flex-provider {
 	display: flex;
 	justify-content: space-between;
+	align-items: center;
 	gap: 12px;
 }
 
