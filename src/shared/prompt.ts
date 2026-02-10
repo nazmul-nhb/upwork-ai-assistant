@@ -11,6 +11,8 @@ export function buildPrompt(mindset: UserMindset, job: UpworkJob, raw = false): 
 		'Your task: decide if the user should apply and draft proposals aligned with the user mindset.',
 		'',
 		`User profile name: ${mindset.profileName}`,
+		`${mindset.profileName}'s Experience: ${mindset?.experience ?? '-'}`,
+		`${mindset.profileName}'s Location: ${mindset?.location ?? '—'}`,
 		`Role title: ${mindset.roleTitle}`,
 		`Core skills: ${mindset.coreSkills.join(', ')}`,
 		`Secondary skills: ${mindset.secondarySkills.join(', ')}`,

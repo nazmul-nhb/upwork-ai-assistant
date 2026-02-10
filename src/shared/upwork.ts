@@ -16,6 +16,7 @@ export function extractUpworkJobFromDom(url: string): UpworkJob {
 	const bidRange = extractBidRange(content);
 	const { connectsRequired, connectsAvailable } = extractConnects(sidebar ?? content);
 	const client = extractClient(sidebar ?? content);
+	const preferredQualifications = extractPreferredQualifications(content);
 
 	return {
 		url,
@@ -39,6 +40,8 @@ export function extractUpworkJobFromDom(url: string): UpworkJob {
 		bidRange: bidRange || undefined,
 		connectsRequired: connectsRequired || undefined,
 		connectsAvailable: connectsAvailable || undefined,
+		preferredQualifications:
+			preferredQualifications.length > 0 ? preferredQualifications : undefined,
 		...client,
 	};
 }
@@ -47,7 +50,7 @@ export function extractUpworkJobFromDom(url: string): UpworkJob {
 // Helpers
 // ---------------------------------------------------------------------------
 
-export function normalizeSpace(value: string, keepNewLine = false): string {
+function normalizeSpace(value: string, keepNewLine = false): string {
 	if (keepNewLine) {
 		// Replace multiple spaces with a single space, but preserve new lines
 		return value.replace(/[ \t]+/g, ' ').trim();
@@ -56,7 +59,7 @@ export function normalizeSpace(value: string, keepNewLine = false): string {
 	return value.replace(/\s+/g, ' ').trim();
 }
 
-export function extractTitle(content: HTMLElement | null): string {
+function extractTitle(content: HTMLElement | null): string {
 	const span = content?.querySelector('h4 span.flex-1') as HTMLElement | null;
 	if (span) return normalizeSpace(span.innerText);
 	const h4 = content?.querySelector('h4') as HTMLElement | null;
@@ -69,7 +72,7 @@ export function extractTitle(content: HTMLElement | null): string {
 	return cleaned || 'Job title cannot be parsed!';
 }
 
-export function extractPostedDate(content: HTMLElement | null): string {
+function extractPostedDate(content: HTMLElement | null): string {
 	const el = content?.querySelector('.posted-on-line') as HTMLElement | null;
 	if (el) {
 		const t = normalizeSpace(el.innerText);
@@ -80,7 +83,7 @@ export function extractPostedDate(content: HTMLElement | null): string {
 	return '';
 }
 
-export function extractJobLocation(content: HTMLElement | null): string {
+function extractJobLocation(content: HTMLElement | null): string {
 	const els = content?.querySelectorAll('.posted-on-line ~ div, .posted-on-line div');
 	if (els) {
 		for (const el of els) {
@@ -99,7 +102,7 @@ export function extractJobLocation(content: HTMLElement | null): string {
 	return '';
 }
 
-export function extractDescription(content: HTMLElement | null): string {
+function extractDescription(content: HTMLElement | null): string {
 	for (const sel of [
 		'[data-test="Description"]',
 		'[data-test="job-description"]',
@@ -119,7 +122,7 @@ export function extractDescription(content: HTMLElement | null): string {
 	return '';
 }
 
-export function extractFeatures(content: HTMLElement | null) {
+function extractFeatures(content: HTMLElement | null) {
 	let budgetText = '';
 	let experienceLevel = '';
 	let projectType = '';
@@ -180,7 +183,7 @@ export function extractFeatures(content: HTMLElement | null) {
 	return { budgetText, experienceLevel, projectType };
 }
 
-export function extractSkills(content: HTMLElement | null): string[] | undefined {
+function extractSkills(content: HTMLElement | null): string[] | undefined {
 	const badges = (content ?? document).querySelectorAll(
 		'.skills-list .air3-badge, .skills-list .badge, [data-test="skill"]'
 	);
@@ -202,7 +205,7 @@ export function extractSkills(content: HTMLElement | null): string[] | undefined
 	return parts.length > 0 ? [...new Set(parts)] : undefined;
 }
 
-export function extractActivity(content: HTMLElement | null): Record<string, string> {
+function extractActivity(content: HTMLElement | null): Record<string, string> {
 	const result: Record<string, string> = {};
 	const items = content?.querySelectorAll(
 		'.client-activity-items .ca-item, .client-activity-items li'
@@ -223,7 +226,20 @@ export function extractActivity(content: HTMLElement | null): Record<string, str
 	return result;
 }
 
-export function extractBidRange(content: HTMLElement | null): string {
+function extractPreferredQualifications(content: HTMLElement | null): string[] {
+	const result: string[] = [];
+	const items = content?.querySelectorAll<HTMLLIElement>('.qualification-items li');
+
+	if (items) {
+		for (const li of items) {
+			result.push(normalizeSpace(li.innerText));
+		}
+	}
+
+	return result;
+}
+
+function extractBidRange(content: HTMLElement | null): string {
 	const headings = content?.querySelectorAll('h5 strong, h5');
 	if (headings) {
 		for (const h of headings) {
@@ -235,7 +251,7 @@ export function extractBidRange(content: HTMLElement | null): string {
 	return '';
 }
 
-export function extractConnects(container: HTMLElement | null) {
+function extractConnects(container: HTMLElement | null) {
 	let connectsRequired = '';
 	let connectsAvailable = '';
 	if (container) {
@@ -248,7 +264,7 @@ export function extractConnects(container: HTMLElement | null) {
 	return { connectsRequired, connectsAvailable };
 }
 
-export function extractClient(container: HTMLElement | null) {
+function extractClient(container: HTMLElement | null) {
 	const aboutClient = container?.querySelector(
 		'[data-test="about-client-container"], .cfe-ui-job-about-client'
 	) as HTMLElement | null;
@@ -358,7 +374,7 @@ export function extractClient(container: HTMLElement | null) {
 	};
 }
 
-export function extractFromNuxtData(field: string): string {
+function extractFromNuxtData(field: string): string {
 	try {
 		const script = document.querySelector('#__NUXT_DATA__');
 		if (!script?.textContent) return '';
@@ -422,6 +438,10 @@ export function formatJobPreview(job: UpworkJob): string {
 		job.clientIndustry ? `Industry: ${job.clientIndustry}` : '',
 		job.clientCompanySize ? `Company size: ${job.clientCompanySize}` : '',
 		job.clientMemberSince ? `Member since: ${job.clientMemberSince}` : '',
+		'',
+		job.preferredQualifications ?
+			`Preferred qualifications:\n${job.preferredQualifications.join('; ')}`
+		:	'',
 		'',
 		// Description (truncated)
 		truncateString(job.description, 3072),

@@ -2,6 +2,8 @@ export type LLMProvider = 'openai' | 'gemini' | 'grok';
 
 export type UserMindset = {
 	profileName: string;
+	experience?: string;
+	location?: string;
 	roleTitle: string;
 	coreSkills: string[];
 	secondarySkills: string[];
@@ -72,6 +74,7 @@ export type UpworkJob = {
 	clientIndustry?: string;
 	clientCompanySize?: string;
 	clientMemberSince?: string;
+	preferredQualifications?: string[];
 };
 
 export type AnalysisResult = {

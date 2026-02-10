@@ -11,7 +11,13 @@ import type {
 } from '@/shared/types';
 import { formatJobPreview } from '@/shared/upwork';
 import { useCopyText } from 'nhb-hooks';
+import { toTitleCase } from 'nhb-toolbox/change-case';
 import { useEffect, useMemo, useState } from 'react';
+
+type ProposalKind = 'short' | 'full';
+type CopyProps = {
+	kind: ProposalKind;
+};
 
 export default function SidePanel() {
 	const [settings, setSettings] = useState<ExtensionSettings | null>(null);
@@ -23,7 +29,7 @@ export default function SidePanel() {
 	const [status, setStatus] = useState('Loading...');
 	const [errorDetails, setErrorDetails] = useState<ErrorDetails | null>(null);
 	const [busy, setBusy] = useState(false);
-	const [lastCopied, setLastCopied] = useState<'prompt' | 'short' | 'full' | null>(null);
+	const [lastCopied, setLastCopied] = useState<'prompt' | ProposalKind | null>(null);
 
 	const { copiedText, copyToClipboard } = useCopyText({
 		onSuccess: (text) => {
@@ -162,15 +168,6 @@ export default function SidePanel() {
 		}
 	}
 
-	async function copyProposal(kind: 'short' | 'full'): Promise<void> {
-		if (!result) return;
-		const text = kind === 'short' ? result.proposalShort : result.proposalFull;
-
-		setLastCopied(kind);
-		await copyToClipboard(text, `Copied ${kind} proposal.`);
-		setTimeout(() => setLastCopied(null), 2000);
-	}
-
 	async function copyPrompt(): Promise<void> {
 		if (!settings?.mindset || !job) return;
 
@@ -206,6 +203,28 @@ export default function SidePanel() {
 	}
 
 	const provider = settings?.activeProvider?.toUpperCase() ?? '—';
+
+	function CopyProposal({ kind }: CopyProps) {
+		const capKind = toTitleCase(kind);
+
+		return (
+			<button
+				disabled={!result}
+				onClick={async () => {
+					if (!result) return;
+					const text = kind === 'short' ? result.proposalShort : result.proposalFull;
+
+					setLastCopied(kind);
+					await copyToClipboard(text, `Copied ${kind} proposal.`);
+					setTimeout(() => setLastCopied(null), 2000);
+				}}
+			>
+				{copiedText && lastCopied === kind ?
+					`${capKind} Proposal Copied!`
+				:	`Copy ${capKind} Proposal`}
+			</button>
+		);
+	}
 
 	return (
 		<main className="side-root">
@@ -276,16 +295,8 @@ export default function SidePanel() {
 							'Prompt Copied!'
 						:	'Copy Prompt'}
 					</button>
-					<button disabled={!result} onClick={() => void copyProposal('short')}>
-						{copiedText && lastCopied === 'short' ?
-							'Proposal Copied!'
-						:	'Copy Short Proposal'}
-					</button>
-					<button disabled={!result} onClick={() => void copyProposal('full')}>
-						{copiedText && lastCopied === 'full' ?
-							'Proposal Copied!'
-						:	'Copy Full Proposal'}
-					</button>
+					<CopyProposal kind="short" />
+					<CopyProposal kind="full" />
 				</div>
 
 				<p className="side-muted">{status}</p>
@@ -333,12 +344,13 @@ export default function SidePanel() {
 								<strong>Bid suggestion:</strong> {result.bidSuggestion}
 							</p>
 						)}
-
-						<strong>Proposal (short)</strong>
+						<h3>Proposal (Short)</h3>
 						<pre>{result.proposalShort}</pre>
-
-						<strong>Proposal (full)</strong>
+						<CopyProposal kind="short" />
+						<br />
+						<h3>Proposal (Full)</h3>
 						<pre>{result.proposalFull}</pre>
+						<CopyProposal kind="full" />
 					</div>
 				</section>
 			)}

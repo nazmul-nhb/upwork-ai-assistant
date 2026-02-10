@@ -91,10 +91,12 @@ Each provider supports:
 1. Navigate to any Upwork job details page.
 2. Click the extension icon → **Open Side Panel**.
 3. The job data is automatically extracted and displayed as a preview.
-4. Enter your passphrase (or enable "Remember for this session").
-5. Click **Analyze Job** — the AI processes the job against your profile.
-6. Review the fit score, reasons, risks, questions, and proposals.
-7. Click **Copy Short Proposal** or **Copy Full Proposal** to clipboard.
+4. Enter your passphrase (or enable "Remember passphrase for this session").
+5. Click **Refresh Job** to re-extract if needed (e.g., after a page update or if the initial extraction failed).
+6. Click **Analyze Job** — the AI processes the job against your profile.
+7. Review the fit score, reasons, risks, questions, and proposals.
+8. Click **Copy Short Proposal** or **Copy Full Proposal** to clipboard.
+9. Click **Copy Prompt** to use tailored instructions for manual LLM queries.
 
 ## Architecture
 

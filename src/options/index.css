@@ -21,27 +21,32 @@ input[type='number'] {
 
 /* Override the browser default and customize the scrollbar (slim width, matching color) for input[type='number'] tags */
 body,
-textarea {
+textarea,
+select {
 	--sb-track-color: #8da7ff40;
 	--sb-thumb-color: #9eb4fbbd;
 	--sb-size: 4px;
 }
 
-body {
+body,
+select {
 	--sb-size: 6px;
 }
 
 body::-webkit-scrollbar,
+select::-webkit-scrollbar,
 textarea::-webkit-scrollbar {
 	width: var(--sb-size);
 }
 
 body::-webkit-scrollbar-track,
+select::-webkit-scrollbar-track,
 textarea::-webkit-scrollbar-track {
 	background: var(--sb-track-color);
 }
 
 body::-webkit-scrollbar-thumb,
+select::-webkit-scrollbar-thumb,
 textarea::-webkit-scrollbar-thumb {
 	background: var(--sb-thumb-color);
 	border-radius: 2px;
@@ -50,6 +55,7 @@ textarea::-webkit-scrollbar-thumb {
 
 @supports not selector(::-webkit-scrollbar) {
 	body,
+	select,
 	textarea {
 		scrollbar-color: var(--sb-thumb-color) var(--sb-track-color);
 	}

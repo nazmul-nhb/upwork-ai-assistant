@@ -58,6 +58,14 @@
 	border-bottom: 1px solid rgba(141, 167, 255, 0.25);
 }
 
+.side-card h3 {
+	margin: 0;
+	font-size: 13px;
+	font-weight: 700;
+	padding-bottom: 4px;
+	border-bottom: 1px solid rgba(141, 167, 255, 0.25);
+}
+
 .side-row {
 	display: flex;
 	flex-wrap: wrap;
@@ -95,7 +103,7 @@
 
 .side-root pre {
 	white-space: pre-wrap;
-	max-height: 240px;
+	max-height: 360px;
 	overflow: auto;
 }
 

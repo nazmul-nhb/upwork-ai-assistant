@@ -54,6 +54,8 @@ const DEFAULT_SETTINGS: ExtensionSettings = {
 	},
 	mindset: {
 		profileName: 'Nazmul Hassan',
+		experience: '2+ years',
+		location: 'Bangladesh',
 		roleTitle: 'Full-stack Web Developer (React/TypeScript/Node.js)',
 		coreSkills: [
 			'JavaScript',
@@ -816,6 +818,19 @@ function extractJobFromPageDOM(): UpworkJob {
 		};
 	};
 
+	function extractPreferredQualifications(): string[] {
+		const result: string[] = [];
+		const items = content?.querySelectorAll<HTMLLIElement>('.qualification-items li');
+
+		if (items) {
+			for (const li of items) {
+				result.push(normalizeSpace(li.innerText));
+			}
+		}
+
+		return result;
+	}
+
 	const title = extractTitle();
 	const description = extractDescription();
 	const postedDate = extractPostedDate();
@@ -826,6 +841,7 @@ function extractJobFromPageDOM(): UpworkJob {
 	const bidRange = extractBidRange();
 	const { connectsRequired, connectsAvailable } = extractConnects();
 	const client = extractClient();
+	const preferredQualifications = extractPreferredQualifications();
 
 	return {
 		url: location.href,
@@ -849,6 +865,8 @@ function extractJobFromPageDOM(): UpworkJob {
 		bidRange: bidRange || undefined,
 		connectsRequired: connectsRequired || undefined,
 		connectsAvailable: connectsAvailable || undefined,
+		preferredQualifications:
+			preferredQualifications.length > 0 ? preferredQualifications : undefined,
 		...client,
 	};
 }

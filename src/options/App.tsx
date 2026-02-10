@@ -1,6 +1,7 @@
 import './App.css';
 
 import type { BgRequest, BgResponse, ExtensionSettings, LLMProvider } from '@/shared/types';
+import { COUNTRIES } from 'nhb-toolbox/constants';
 import { Cipher } from 'nhb-toolbox/hash';
 import { useEffect, useState } from 'react';
 
@@ -331,6 +332,46 @@ export default function Options() {
 							})
 						}
 					/>
+				</label>
+
+				<label>
+					Experience
+					<input
+						placeholder="Your experience, e.g. 2+ years"
+						value={settings.mindset.experience ?? ''}
+						onChange={(e) =>
+							setSettings({
+								...settings,
+								mindset: { ...settings.mindset, experience: e.target.value },
+							})
+						}
+					/>
+				</label>
+
+				<label>
+					Location
+					<input
+						list="countries-datalist"
+						value={settings.mindset.location ?? ''}
+						onChange={(e) =>
+							setSettings({
+								...settings,
+								mindset: { ...settings.mindset, location: e.target.value },
+							})
+						}
+						placeholder="Select or type your country/location"
+					/>
+					<datalist id="countries-datalist">
+						{COUNTRIES.map((country) => {
+							const { country_code, country_name, iso_code } = country;
+
+							return (
+								<option key={country_code} value={country_name}>
+									{country_name}-{iso_code} ({country_code})
+								</option>
+							);
+						})}
+					</datalist>
 				</label>
 
 				<label>
