@@ -27,9 +27,9 @@ export default function Options() {
 
 	async function loadSettingsFromBg(): Promise<void> {
 		try {
-			const response = (await chrome.runtime.sendMessage({
+			const response = await chrome.runtime.sendMessage<BgRequest, BgResponse>({
 				type: 'GET_SETTINGS',
-			} satisfies BgRequest)) as BgResponse;
+			});
 
 			if (!response.ok) {
 				setSettingsStatus(`Error: ${response.error}`);
@@ -52,10 +52,10 @@ export default function Options() {
 	}
 
 	async function persist(next: ExtensionSettings): Promise<boolean> {
-		const response = (await chrome.runtime.sendMessage({
+		const response = await chrome.runtime.sendMessage<BgRequest, BgResponse>({
 			type: 'SET_SETTINGS',
 			settings: next,
-		} satisfies BgRequest)) as BgResponse;
+		});
 
 		if (!response.ok) {
 			setSettingsStatus(`Save failed: ${response.error}`);
@@ -131,10 +131,10 @@ export default function Options() {
 		setConnectionStatus(`Testing ${activeProvider.toUpperCase()} connection...`);
 
 		try {
-			const response = (await chrome.runtime.sendMessage({
+			const response = await chrome.runtime.sendMessage<BgRequest, BgResponse>({
 				type: 'TEST_PROVIDER_CONNECTION',
 				passphrase: passphrase.trim(),
-			} satisfies BgRequest)) as BgResponse;
+			});
 
 			if (!response.ok) {
 				setConnectionStatus(`Error: ${response.error}`);

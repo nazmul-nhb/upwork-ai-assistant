@@ -14,9 +14,9 @@ export default function PopUp() {
 
 	async function init(): Promise<void> {
 		try {
-			const res = (await chrome.runtime.sendMessage({
+			const res = await chrome.runtime.sendMessage<BgRequest, BgResponse>({
 				type: 'GET_SETTINGS',
-			} satisfies BgRequest)) as BgResponse;
+			});
 
 			if (res.ok && res.type === 'SETTINGS') {
 				setSettings(res.settings);
@@ -24,9 +24,9 @@ export default function PopUp() {
 
 			// Use chrome.scripting.executeScript via background to extract job
 			// data directly — this bypasses the CRXJS content-script loader.
-			const extractRes = (await chrome.runtime.sendMessage({
+			const extractRes = await chrome.runtime.sendMessage<BgRequest, BgResponse>({
 				type: 'EXTRACT_FROM_TAB',
-			} satisfies BgRequest)) as BgResponse;
+			});
 
 			if (extractRes.ok && extractRes.type === 'ACTIVE_JOB' && extractRes.job) {
 				setJob(extractRes.job);

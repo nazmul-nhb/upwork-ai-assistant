@@ -56,9 +56,9 @@ export default function SidePanel() {
 	async function init(): Promise<void> {
 		setBusy(true);
 		try {
-			const res = (await chrome.runtime.sendMessage({
+			const res = await chrome.runtime.sendMessage<BgRequest, BgResponse>({
 				type: 'GET_SETTINGS',
-			} satisfies BgRequest)) as BgResponse;
+			});
 
 			if (!res.ok) {
 				setStatus(`Error: ${res.error}`);
@@ -102,9 +102,9 @@ export default function SidePanel() {
 		try {
 			// Use chrome.scripting.executeScript via background — bypasses CRXJS
 			// content-script loader entirely so it works even on first load.
-			const res = (await chrome.runtime.sendMessage({
+			const res = await chrome.runtime.sendMessage<BgRequest, BgResponse>({
 				type: 'EXTRACT_FROM_TAB',
-			} satisfies BgRequest)) as BgResponse;
+			});
 
 			if (res.ok && res.type === 'ACTIVE_JOB' && res.job) {
 				setJob(res.job);
@@ -142,11 +142,11 @@ export default function SidePanel() {
 		setStatus('Analyzing with AI...');
 
 		try {
-			const response = (await chrome.runtime.sendMessage({
+			const response = await chrome.runtime.sendMessage<BgRequest, BgResponse>({
 				type: 'ANALYZE_JOB',
 				job,
 				passphrase: passphrase.trim(),
-			} satisfies BgRequest)) as BgResponse;
+			});
 
 			if (!response.ok) {
 				consumeError(response, 'Analyze');
@@ -284,10 +284,10 @@ export default function SidePanel() {
 							if (settings) {
 								const updated = { ...settings, rememberPassphrase: checked };
 								setSettings(updated);
-								void chrome.runtime.sendMessage({
+								void chrome.runtime.sendMessage<BgRequest, BgResponse>({
 									type: 'SET_SETTINGS',
 									settings: updated,
-								} satisfies BgRequest);
+								});
 							}
 
 							if (!checked) {

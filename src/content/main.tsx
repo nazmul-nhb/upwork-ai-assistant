@@ -4,8 +4,11 @@ import { extractUpworkJobFromDom } from '@/shared/upwork';
 function sendSnapshot(): void {
 	try {
 		const job = extractUpworkJobFromDom(location.href);
-		const message: ContentSnapshotMessage = { type: 'UPWORK_JOB_SNAPSHOT', job };
-		void chrome.runtime.sendMessage(message);
+
+		void chrome.runtime.sendMessage<ContentSnapshotMessage>({
+			type: 'UPWORK_JOB_SNAPSHOT',
+			job,
+		});
 	} catch {
 		// Ignore extraction failures on intermediate render states.
 	}
