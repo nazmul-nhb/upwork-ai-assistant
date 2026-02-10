@@ -140,7 +140,8 @@ jobs:
             **Compare Changes:** [${{ env.LATEST_TAG }} vs v${{ env.VERSION }}](https://github.com/${{ github.repository }}/compare/${{ env.LATEST_TAG }}...v${{ env.VERSION }})
 
             ---
-            **[README](https://github.com/${{ github.repository }}?tab=readme-ov-file)**
+
+            **[Read the Full Documentation](https://github.com/${{ github.repository }}?tab=readme-ov-file)**
 
             ### 📥 Installation
             1. Download the `.zip` file below
