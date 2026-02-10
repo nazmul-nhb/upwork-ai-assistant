@@ -32,6 +32,7 @@
     }
   ],
   "dependencies": {
+    "nhb-hooks": "^1.40.21",
     "nhb-toolbox": "^4.28.80",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"

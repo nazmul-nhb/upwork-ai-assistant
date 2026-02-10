@@ -1,4 +1,4 @@
-export type LlmProvider = 'openai' | 'gemini' | 'grok';
+export type LLMProvider = 'openai' | 'gemini' | 'grok';
 
 export type UserMindset = {
 	profileName: string;
@@ -27,7 +27,7 @@ export type ProviderMap = {
 };
 
 export type ExtensionSettings = {
-	activeProvider: LlmProvider;
+	activeProvider: LLMProvider;
 	providers: ProviderMap;
 	rememberPassphrase: boolean;
 	mindset: UserMindset;
@@ -85,6 +85,13 @@ export type AnalysisResult = {
 	bidSuggestion?: string;
 };
 
+export type ErrorDetails = {
+	context: string;
+	provider?: LLMProvider;
+	statusCode?: number;
+	payload?: string;
+};
+
 export type BgRequest =
 	| { type: 'PING' }
 	| { type: 'GET_SETTINGS' }
@@ -104,7 +111,7 @@ export type BgResponse =
 	| {
 			ok: false;
 			error: string;
-			provider?: LlmProvider;
+			provider?: LLMProvider;
 			statusCode?: number;
 			rawError?: string;
 	  };

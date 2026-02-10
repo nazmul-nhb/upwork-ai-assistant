@@ -1,10 +1,10 @@
 import './App.css';
 
-import type { BgRequest, BgResponse, ExtensionSettings, LlmProvider } from '@/shared/types';
+import type { BgRequest, BgResponse, ExtensionSettings, LLMProvider } from '@/shared/types';
 import { Cipher } from 'nhb-toolbox/hash';
 import { useEffect, useState } from 'react';
 
-const PROVIDERS: LlmProvider[] = ['openai', 'gemini', 'grok'];
+const PROVIDERS: LLMProvider[] = ['openai', 'gemini', 'grok'];
 
 export default function Options() {
 	const [settings, setSettings] = useState<ExtensionSettings | null>(null);
@@ -167,7 +167,7 @@ export default function Options() {
 					<select
 						value={activeProvider}
 						onChange={(e) => {
-							const provider = e.target.value as LlmProvider;
+							const provider = e.target.value as LLMProvider;
 							setSettings({ ...settings, activeProvider: provider });
 							setKeyStatus(
 								settings.providers[provider].apiKeyEncrypted ?

@@ -657,7 +657,7 @@ function extractJobFromPageDOM(): UpworkJob {
 		if (connectsContainer) {
 			const text = connectsContainer.innerText;
 			// "Required Connects to submit a proposal: 13"
-			const reqMatch = text.match(/Send a proposal for|Required Connects.*?:\s*(\d+)/i);
+			const reqMatch = text.match(/[Send a proposal for|Required Connects].*?:\s*(\d+)/i);
 			if (reqMatch) connectsRequired = reqMatch[1];
 			// "Available Connects: 22"
 			const availMatch = text.match(/Available Connects:\s*(\d+)/i);

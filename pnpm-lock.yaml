@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      nhb-hooks:
+        specifier: ^1.40.21
+        version: 1.40.21(nhb-toolbox@4.28.80)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       nhb-toolbox:
         specifier: ^4.28.80
         version: 4.28.80
@@ -1506,6 +1509,13 @@ packages:
 
   natural-compare@1.4.0:
     resolution: {integrity: sha512-OWND8ei3VtNC9h7V60qff3SVobHr996CTwgxubgyQYEpg290h9J0buyECNNJexkFm5sOajh5G116RYA1c8ZMSw==}
+
+  nhb-hooks@1.40.21:
+    resolution: {integrity: sha512-tlX6GqzZ+mChFM7GUiXMfgsnrEv/RgLcpymtyhkWsweAsDf2pIlZEAko/qzskTKqOSstKhYZLwiPGkSQN7K3Cw==}
+    peerDependencies:
+      nhb-toolbox: '>=4.26.50'
+      react: '>=18.3.1 || ^19.0.0'
+      react-dom: '>=18.3.1 || ^19.0.0'
 
   nhb-scripts@1.9.2:
     resolution: {integrity: sha512-bqTqur5SDWKB2VG0R+qagJFlwi/vnzOmma5DUFgeGngIOj1PV7JdbjbYZ1ff99+lpufaSDA0WjrfSIC8mg05Bg==}
@@ -3598,6 +3608,12 @@ snapshots:
   nanoid@3.3.11: {}
 
   natural-compare@1.4.0: {}
+
+  nhb-hooks@1.40.21(nhb-toolbox@4.28.80)(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
+    dependencies:
+      nhb-toolbox: 4.28.80
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
 
   nhb-scripts@1.9.2:
     dependencies:

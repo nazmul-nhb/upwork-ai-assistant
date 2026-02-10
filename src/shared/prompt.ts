@@ -41,7 +41,7 @@ export function buildPrompt(mindset: UserMindset, job: UpworkJob): BuiltPrompt {
 	].join('\n');
 
 	const input = [
-		'Analyze this Upwork job and produce the JSON output schema exactly.',
+		'Analyze this Upwork job and produce the JSON output schema exactly:',
 		'',
 		formatJobPreview(job),
 	].join('\n');

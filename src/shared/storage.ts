@@ -6,10 +6,10 @@ import {
 	isString,
 	isUndefined,
 } from 'nhb-toolbox';
-import type { ExtensionSettings, LlmProvider, ProviderConfig, UserMindset } from './types';
+import type { ExtensionSettings, LLMProvider, ProviderConfig, UserMindset } from './types';
 
 const KEY = 'UPWORK_AI_ASSISTANT_SETTINGS_V2';
-const PROVIDERS: LlmProvider[] = ['openai', 'gemini', 'grok'];
+const PROVIDERS: LLMProvider[] = ['openai', 'gemini', 'grok'];
 
 export async function loadSettings(): Promise<ExtensionSettings | null> {
 	const data = await chrome.storage.local.get(KEY);
@@ -53,7 +53,7 @@ function isSettings(value: unknown): value is ExtensionSettings {
 	if (!isObject(value)) return false;
 	const obj = value;
 
-	if (!PROVIDERS.includes(obj.activeProvider as LlmProvider)) return false;
+	if (!PROVIDERS.includes(obj.activeProvider as LLMProvider)) return false;
 	if (!isBoolean(obj.rememberPassphrase)) return false;
 
 	const providers = obj.providers;

@@ -7,10 +7,10 @@ import {
 	isString,
 	isValidArray,
 } from 'nhb-toolbox';
-import type { LlmProvider } from './types';
+import type { LLMProvider } from './types';
 
 export type LlmRequest = {
-	provider: LlmProvider;
+	provider: LLMProvider;
 	apiKey: string;
 	model: string;
 	instructions: string;
@@ -21,12 +21,12 @@ export type LlmRequest = {
 };
 
 export class LlmProviderError extends Error {
-	provider: LlmProvider;
+	provider: LLMProvider;
 	statusCode?: number;
 	rawError?: string;
 
 	constructor(params: {
-		provider: LlmProvider;
+		provider: LLMProvider;
 		message: string;
 		statusCode?: number;
 		rawError?: string;

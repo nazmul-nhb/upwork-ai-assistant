@@ -1,23 +1,17 @@
+import { buildPrompt } from '@/shared/prompt';
 import './App.css';
 
 import type {
 	AnalysisResult,
 	BgRequest,
 	BgResponse,
+	ErrorDetails,
 	ExtensionSettings,
-	LlmProvider,
 	UpworkJob,
 } from '@/shared/types';
 import { formatJobPreview } from '@/shared/upwork';
-import { copyToClipboard } from 'nhb-toolbox';
+import { useCopyText } from 'nhb-hooks';
 import { useEffect, useMemo, useState } from 'react';
-
-type ErrorDetails = {
-	context: string;
-	provider?: LlmProvider;
-	statusCode?: number;
-	payload?: string;
-};
 
 export default function SidePanel() {
 	const [settings, setSettings] = useState<ExtensionSettings | null>(null);
@@ -29,6 +23,15 @@ export default function SidePanel() {
 	const [status, setStatus] = useState('Loading...');
 	const [errorDetails, setErrorDetails] = useState<ErrorDetails | null>(null);
 	const [busy, setBusy] = useState(false);
+
+	const { copiedText, copyToClipboard } = useCopyText({
+		onSuccess: (text) => {
+			setStatus(text);
+		},
+		onError: (msg) => {
+			setStatus(msg);
+		},
+	});
 
 	useEffect(() => {
 		void init();
@@ -161,9 +164,18 @@ export default function SidePanel() {
 		if (!result) return;
 		const text = kind === 'short' ? result.proposalShort : result.proposalFull;
 
-		await copyToClipboard(text);
+		await copyToClipboard(text, `Copied ${kind} proposal.`);
+	}
 
-		setStatus(`Copied ${kind} proposal.`);
+	async function copyPrompt(): Promise<void> {
+		if (!settings?.mindset || !job) return;
+
+		const { instructions, input } = buildPrompt(settings?.mindset, job);
+
+		await copyToClipboard(
+			instructions.concat('\n\n', input),
+			`Copied prompt to clipboard.`
+		);
 	}
 
 	function consumeError(response: Extract<BgResponse, { ok: false }>, context: string): void {
@@ -248,16 +260,19 @@ export default function SidePanel() {
 
 				<div className="side-row">
 					<button disabled={busy} onClick={() => void refreshJob()}>
-						Refresh Job
+						{busy ? 'Working...' : 'Refresh Job'}
 					</button>
 					<button disabled={busy || !job} onClick={() => void analyzeJob()}>
-						Analyze Job
+						{busy ? 'Working...' : 'Analyze Job'}
+					</button>
+					<button disabled={busy || !job} onClick={() => void copyPrompt()}>
+						{copiedText ? 'Prompt Copied!' : 'Copy Prompt'}
 					</button>
 					<button disabled={!result} onClick={() => void copyProposal('short')}>
-						Copy Short Proposal
+						{copiedText ? 'Proposal Copied!' : 'Copy Short Proposal'}
 					</button>
 					<button disabled={!result} onClick={() => void copyProposal('full')}>
-						Copy Full Proposal
+						{copiedText ? 'Proposal Copied!' : 'Copy Full Proposal'}
 					</button>
 				</div>
 
