@@ -5,9 +5,11 @@
 		"HMAC",
 		"initialise",
 		"Laravel",
+		"pipefail",
 		"segmentations",
 		"serialises",
 		"sidepanel",
+		"softprops",
 		"upwork",
 		"Upwork"
 	]
