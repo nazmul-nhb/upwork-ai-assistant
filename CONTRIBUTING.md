@@ -73,14 +73,14 @@ src/
 
 ### Key Files
 
-| File                      | Purpose                                               |
-| ------------------------- | ----------------------------------------------------- |
-| `manifest.config.ts`      | Chrome extension manifest (Manifest V3)               |
-| `vite.config.ts`          | Vite build configuration with CRXJS and zip plugins   |
-| `eslint.config.mjs`       | ESLint configuration                                  |
-| `src/background/index.ts` | Service worker — all background logic lives here      |
-| `src/shared/types.ts`     | All shared TypeScript types                           |
-| `nhb.scripts.config.mjs`  | Custom development scripts from `nhb-scripts` package |
+| File                      | Purpose                                                     |
+| ------------------------- | ----------------------------------------------------------- |
+| `manifest.config.ts`      | Chrome extension manifest (Manifest V3)                     |
+| `vite.config.ts`          | Vite build configuration with CRXJS and zip plugins         |
+| `eslint.config.mjs`       | ESLint configuration                                        |
+| `src/background/index.ts` | Service worker — all background logic lives here            |
+| `src/shared/types.ts`     | All shared TypeScript types                                 |
+| `nhb.scripts.config.mjs`  | Customizable development scripts from `nhb-scripts` package |
 
 ## Development Workflow
 
@@ -131,8 +131,8 @@ After making changes:
 
 ### TypeScript
 
-- **Strict mode is enabled.** All code must be fully typed — avoid `any`.
-- Prefer `satisfies` for type assertion on message payloads.
+- **Strict mode is enabled.** All code must be fully typed — avoid explicit `any`.
+- Prefer `satisfies` for type assertion on message payloads when passing generic is not feasible.
 - Use `unknown` + type guards instead of `any` for deserialized data.
 
 ### React
@@ -153,6 +153,10 @@ After making changes:
 - Single quotes for strings.
 - Trailing commas in multi-line structures.
 - No unused imports or variables (enforced by ESLint + TypeScript).
+- Descriptive variable and function names. Avoid abbreviations.
+- Avoid spelling issues by using an editor with built-in spell check or a plugin.
+- JSDoc/TSDoc comments for complex functions or non-obvious logic.
+- Consistent formatting (run `pnpm format` before committing). Use `pnpm commit` to automatically format files.
 
 ## Submitting Changes
 
