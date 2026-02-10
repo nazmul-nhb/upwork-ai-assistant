@@ -1,7 +1,7 @@
-import { clampNumber } from 'nhb-toolbox';
 import './App.css';
 
 import type { BgRequest, BgResponse, ExtensionSettings, LLMProvider } from '@/shared/types';
+import { clampNumber } from 'nhb-toolbox';
 import { COUNTRIES } from 'nhb-toolbox/constants';
 import { Cipher } from 'nhb-toolbox/hash';
 import { useEffect, useState } from 'react';

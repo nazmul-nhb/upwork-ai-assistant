@@ -1,6 +1,6 @@
-import { buildPrompt } from '@/shared/prompt';
 import './App.css';
 
+import { buildPrompt } from '@/shared/prompt';
 import type {
 	AnalysisResult,
 	BgRequest,
