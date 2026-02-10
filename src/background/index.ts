@@ -399,11 +399,12 @@ async function extractJobViaScripting(tabId: number): Promise<UpworkJob | null> 
 
 		const raw = frame?.result;
 		if (isObject(raw) && isString(raw.title) && isString(raw.description)) {
-			return raw as UpworkJob;
+			return raw;
 		}
 	} catch {
 		// scripting.executeScript can fail if the tab is about:blank, etc.
 	}
+
 	return null;
 }
 
@@ -412,11 +413,12 @@ async function extractJobViaScripting(tabId: number): Promise<UpworkJob | null> 
  * chrome.scripting.executeScript. It MUST NOT reference any outer-scope
  * variables — Chrome serialises the function body and runs it in isolation.
  */
-function extractJobFromPageDOM() {
-	const norm = (v: string, keepNewLine = false) =>
-		keepNewLine ? v.replace(/[ \t]+/g, ' ').trim() : v.replace(/\s+/g, ' ').trim();
+function extractJobFromPageDOM(): UpworkJob {
+	const normalizeSpace = (v: string, keepNewLine = false) => {
+		return keepNewLine ? v.replace(/[ \t]+/g, ' ').trim() : v.replace(/\s+/g, ' ').trim();
+	};
 
-	const nuxtField = (field: string): string => {
+	const extractNuxtField = (field: string): string => {
 		try {
 			const el = document.querySelector('#__NUXT_DATA__');
 			if (!el?.textContent) return '';
@@ -442,13 +444,13 @@ function extractJobFromPageDOM() {
 	// ---- Title ----
 	const extractTitle = (): string => {
 		const span = content?.querySelector('h4 span.flex-1') as HTMLElement | null;
-		if (span) return norm(span.innerText);
+		if (span) return normalizeSpace(span.innerText);
 		const h4 = content?.querySelector('h4') as HTMLElement | null;
-		if (h4) return norm(h4.innerText);
-		const n = nuxtField('title');
+		if (h4) return normalizeSpace(h4.innerText);
+		const n = extractNuxtField('title');
 		if (n) return n;
 		const h1 = document.querySelector('h1') as HTMLElement | null;
-		if (h1) return norm(h1.innerText);
+		if (h1) return normalizeSpace(h1.innerText);
 		const cleaned = document.title.replace(/\s*[-|]\s*Upwork.*$/i, '').trim();
 		return cleaned || 'Job title cannot be parsed!';
 	};
@@ -457,7 +459,7 @@ function extractJobFromPageDOM() {
 	const extractPostedDate = (): string => {
 		const el = content?.querySelector('.posted-on-line') as HTMLElement | null;
 		if (el) {
-			const t = norm(el.innerText);
+			const t = normalizeSpace(el.innerText);
 			// "Posted yesterday" or "Posted 2 hours ago"
 			const m = t.match(/Posted\s+(.+)/i);
 			if (m?.[1]) return m[1];
@@ -472,7 +474,7 @@ function extractJobFromPageDOM() {
 		const els = content?.querySelectorAll('.posted-on-line ~ div, .posted-on-line div');
 		if (els) {
 			for (const el of els) {
-				const t = norm((el as HTMLElement).innerText);
+				const t = normalizeSpace((el as HTMLElement).innerText);
 				if (t && /worldwide|domestic|u\.?s\.?\s*only|europe|asia|remote/i.test(t)) {
 					return t;
 				}
@@ -483,7 +485,7 @@ function extractJobFromPageDOM() {
 		if (line) {
 			const ps = line.querySelectorAll('p');
 			for (const p of ps) {
-				const t = norm(p.innerText);
+				const t = normalizeSpace(p.innerText);
 				if (/worldwide|domestic|u\.?s\.?\s*only|remote/i.test(t)) return t;
 			}
 		}
@@ -499,13 +501,13 @@ function extractJobFromPageDOM() {
 		]) {
 			const el = (content ?? document).querySelector(sel) as HTMLElement | null;
 			if (el) {
-				const t = norm(el.innerText, true);
+				const t = normalizeSpace(el.innerText, true);
 				if (t.length > 20) return t;
 			}
 		}
 		if (content) {
 			const sec = content.querySelector('section') as HTMLElement | null;
-			return norm(sec ? sec.innerText : content.innerText, true);
+			return normalizeSpace(sec ? sec.innerText : content.innerText, true);
 		}
 		return '';
 	};
@@ -524,18 +526,18 @@ function extractJobFromPageDOM() {
 		if (featureItems) {
 			for (const li of featureItems) {
 				const descEl = li.querySelector('.description') as HTMLElement | null;
-				const desc = descEl ? norm(descEl.innerText).toLowerCase() : '';
+				const desc = descEl ? normalizeSpace(descEl.innerText).toLowerCase() : '';
 				const strongEl = li.querySelector('strong') as HTMLElement | null;
-				const value = strongEl ? norm(strongEl.innerText) : '';
+				const value = strongEl ? normalizeSpace(strongEl.innerText) : '';
 
 				if (desc.includes('fixed-price') || desc.includes('hourly')) {
 					// Budget line: value is the amount, desc is the type
 					budgetText =
 						value ?
-							`${value} (${norm(descEl!.innerText)})`
-						:	norm(descEl!.innerText);
+							`${value} (${normalizeSpace(descEl!.innerText)})`
+						:	normalizeSpace(descEl!.innerText);
 				} else if (desc.includes('experience level') || desc.includes('experience')) {
-					experienceLevel = value || norm(descEl!.innerText);
+					experienceLevel = value || normalizeSpace(descEl!.innerText);
 				}
 			}
 		}
@@ -550,8 +552,8 @@ function extractJobFromPageDOM() {
 			if (budgetLi) {
 				const strongEl = budgetLi.querySelector('strong') as HTMLElement | null;
 				const descEl = budgetLi.querySelector('.description') as HTMLElement | null;
-				const amount = strongEl ? norm(strongEl.innerText) : '';
-				const type = descEl ? norm(descEl.innerText) : '';
+				const amount = strongEl ? normalizeSpace(strongEl.innerText) : '';
+				const type = descEl ? normalizeSpace(descEl.innerText) : '';
 				budgetText = amount ? `${amount} (${type})` : type;
 			}
 		}
@@ -561,7 +563,7 @@ function extractJobFromPageDOM() {
 			const expLi = expEl?.closest('li');
 			if (expLi) {
 				const strongEl = expLi.querySelector('strong') as HTMLElement | null;
-				experienceLevel = strongEl ? norm(strongEl.innerText) : '';
+				experienceLevel = strongEl ? normalizeSpace(strongEl.innerText) : '';
 			}
 		}
 
@@ -570,10 +572,10 @@ function extractJobFromPageDOM() {
 		if (segLists) {
 			for (const li of segLists) {
 				const strongEl = li.querySelector('strong') as HTMLElement | null;
-				const label = strongEl ? norm(strongEl.innerText).toLowerCase() : '';
+				const label = strongEl ? normalizeSpace(strongEl.innerText).toLowerCase() : '';
 				if (label.includes('project type')) {
 					const spanEl = li.querySelector('span') as HTMLElement | null;
-					projectType = spanEl ? norm(spanEl.innerText) : '';
+					projectType = spanEl ? normalizeSpace(spanEl.innerText) : '';
 				}
 			}
 		}
@@ -591,7 +593,7 @@ function extractJobFromPageDOM() {
 		for (const el of badges) {
 			// Get the deepest text which is inside .air3-line-clamp or direct text
 			const clamp = el.querySelector('.air3-line-clamp') as HTMLElement | null;
-			const text = norm((clamp ?? (el as HTMLElement)).textContent ?? '');
+			const text = normalizeSpace((clamp ?? (el as HTMLElement)).textContent ?? '');
 			if (text) tags.push(text);
 		}
 		if (tags.length > 0) return [...new Set(tags)];
@@ -602,7 +604,7 @@ function extractJobFromPageDOM() {
 		if (m?.[1]) {
 			const parts = m[1]
 				.split(',')
-				.map((p) => norm(p))
+				.map((p) => normalizeSpace(p))
 				.filter(Boolean);
 			if (parts.length) return [...new Set(parts)];
 		}
@@ -622,8 +624,10 @@ function extractJobFromPageDOM() {
 					'.value, span.value, div.value'
 				) as HTMLElement | null;
 				if (titleEl && valueEl) {
-					const key = norm(titleEl.innerText).replace(/:$/, '').toLowerCase();
-					const val = norm(valueEl.innerText);
+					const key = normalizeSpace(titleEl.innerText)
+						.replace(/:$/, '')
+						.toLowerCase();
+					const val = normalizeSpace(valueEl.innerText);
 					result[key] = val;
 				}
 			}
@@ -636,7 +640,7 @@ function extractJobFromPageDOM() {
 		const headings = content?.querySelectorAll('h5 strong, h5');
 		if (headings) {
 			for (const h of headings) {
-				const t = norm((h as HTMLElement).innerText);
+				const t = normalizeSpace((h as HTMLElement).innerText);
 				if (t.toLowerCase().includes('bid range'))
 					return t.replace(/^bid range\s*[-–—]?\s*/i, '');
 			}
@@ -677,14 +681,14 @@ function extractJobFromPageDOM() {
 		const clientText = aboutClient.innerText;
 
 		// Payment verified
-		const paymentVerified = /payment (method )?verified/i.test(clientText);
+		const clientPaymentVerified = /payment (method )?verified/i.test(clientText);
 
 		// Rating
 		let clientRating = '';
 		const ratingEl = aboutClient.querySelector(
 			'.air3-rating-value-text'
 		) as HTMLElement | null;
-		if (ratingEl) clientRating = norm(ratingEl.innerText);
+		if (ratingEl) clientRating = normalizeSpace(ratingEl.innerText);
 
 		// Review count: "4.95 of 391 reviews"
 		let clientReviewCount = '';
@@ -698,7 +702,8 @@ function extractJobFromPageDOM() {
 		) as HTMLElement | null;
 		if (locEl) {
 			const strongEl = locEl.querySelector('strong') as HTMLElement | null;
-			clientLocation = strongEl ? norm(strongEl.innerText) : norm(locEl.innerText);
+			clientLocation =
+				strongEl ? normalizeSpace(strongEl.innerText) : normalizeSpace(locEl.innerText);
 		}
 
 		// Jobs posted: [data-qa="client-job-posting-stats"]
@@ -709,10 +714,12 @@ function extractJobFromPageDOM() {
 			'[data-qa="client-job-posting-stats"]'
 		) as HTMLElement | null;
 		if (jobStatsEl) {
-			const strongText = norm(jobStatsEl.querySelector('strong')?.innerText ?? '');
+			const strongText = normalizeSpace(
+				jobStatsEl.querySelector('strong')?.innerText ?? ''
+			);
 			const jm = strongText.match(/([\d,]+)\s+jobs?\s+posted/i);
 			if (jm) clientJobsPosted = jm[1];
-			const divText = norm(
+			const divText = normalizeSpace(
 				jobStatsEl.querySelector('div')?.innerText ?? jobStatsEl.innerText
 			);
 			const hm = divText.match(/([\d.]+%)\s+hire\s+rate/i);
@@ -727,7 +734,9 @@ function extractJobFromPageDOM() {
 			'[data-qa="client-spend"]'
 		) as HTMLElement | null;
 		if (spendEl) {
-			const sm = norm(spendEl.innerText).match(/([$\d,.KkMm]+)\s*total\s*spent/i);
+			const sm = normalizeSpace(spendEl.innerText).match(
+				/([$\d,.KkMm]+)\s*total\s*spent/i
+			);
 			if (sm) clientTotalSpent = sm[1];
 		}
 
@@ -738,7 +747,7 @@ function extractJobFromPageDOM() {
 			'[data-qa="client-hires"]'
 		) as HTMLElement | null;
 		if (hiresEl) {
-			const ht = norm(hiresEl.innerText);
+			const ht = normalizeSpace(hiresEl.innerText);
 			const hMatch = ht.match(/([\d,]+)\s*hires?/i);
 			if (hMatch) clientTotalHires = hMatch[1];
 			const aMatch = ht.match(/([\d,]+)\s*active/i);
@@ -751,7 +760,7 @@ function extractJobFromPageDOM() {
 			'[data-qa="client-hourly-rate"]'
 		) as HTMLElement | null;
 		if (rateEl) {
-			const rm = norm(rateEl.innerText).match(/([$\d,.]+\/hr)/i);
+			const rm = normalizeSpace(rateEl.innerText).match(/([$\d,.]+\/hr)/i);
 			if (rm) clientAvgHourlyRate = rm[1];
 		}
 
@@ -760,21 +769,21 @@ function extractJobFromPageDOM() {
 		const hoursEl = aboutClient.querySelector(
 			'[data-qa="client-hours"]'
 		) as HTMLElement | null;
-		if (hoursEl) clientTotalHours = norm(hoursEl.innerText);
+		if (hoursEl) clientTotalHours = normalizeSpace(hoursEl.innerText);
 
 		// Industry
 		let clientIndustry = '';
 		const indEl = aboutClient.querySelector(
 			'[data-qa="client-company-profile-industry"]'
 		) as HTMLElement | null;
-		if (indEl) clientIndustry = norm(indEl.innerText);
+		if (indEl) clientIndustry = normalizeSpace(indEl.innerText);
 
 		// Company size
 		let clientCompanySize = '';
 		const sizeEl = aboutClient.querySelector(
 			'[data-qa="client-company-profile-size"]'
 		) as HTMLElement | null;
-		if (sizeEl) clientCompanySize = norm(sizeEl.innerText);
+		if (sizeEl) clientCompanySize = normalizeSpace(sizeEl.innerText);
 
 		// Member since
 		let clientMemberSince = '';
@@ -782,13 +791,13 @@ function extractJobFromPageDOM() {
 			'[data-qa="client-contract-date"]'
 		) as HTMLElement | null;
 		if (memberEl) {
-			const mt = norm(memberEl.innerText);
+			const mt = normalizeSpace(memberEl.innerText);
 			const mm = mt.match(/Member since\s+(.+)/i);
 			clientMemberSince = mm ? mm[1] : mt;
 		}
 
 		return {
-			clientPaymentVerified: paymentVerified,
+			clientPaymentVerified,
 			clientRating,
 			clientReviewCount,
 			clientLocation,

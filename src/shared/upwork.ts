@@ -1,4 +1,4 @@
-import { isString, trimString, truncateString } from 'nhb-toolbox';
+import { isString, truncateString } from 'nhb-toolbox';
 import type { UpworkJob } from './types';
 
 export function extractUpworkJobFromDom(url: string): UpworkJob {
@@ -44,16 +44,16 @@ export function extractUpworkJobFromDom(url: string): UpworkJob {
 // Helpers
 // ---------------------------------------------------------------------------
 
-function normalizeSpace(value: string, keepNewLine = false): string {
+export function normalizeSpace(value: string, keepNewLine = false): string {
 	if (keepNewLine) {
 		// Replace multiple spaces with a single space, but preserve new lines
 		return value.replace(/[ \t]+/g, ' ').trim();
 	}
 
-	return trimString(value);
+	return value.replace(/\s+/g, ' ').trim();
 }
 
-function extractTitle(content: HTMLElement | null): string {
+export function extractTitle(content: HTMLElement | null): string {
 	const span = content?.querySelector('h4 span.flex-1') as HTMLElement | null;
 	if (span) return normalizeSpace(span.innerText);
 	const h4 = content?.querySelector('h4') as HTMLElement | null;
@@ -66,7 +66,7 @@ function extractTitle(content: HTMLElement | null): string {
 	return cleaned || 'Job title cannot be parsed!';
 }
 
-function extractPostedDate(content: HTMLElement | null): string {
+export function extractPostedDate(content: HTMLElement | null): string {
 	const el = content?.querySelector('.posted-on-line') as HTMLElement | null;
 	if (el) {
 		const t = normalizeSpace(el.innerText);
@@ -77,7 +77,7 @@ function extractPostedDate(content: HTMLElement | null): string {
 	return '';
 }
 
-function extractJobLocation(content: HTMLElement | null): string {
+export function extractJobLocation(content: HTMLElement | null): string {
 	const els = content?.querySelectorAll('.posted-on-line ~ div, .posted-on-line div');
 	if (els) {
 		for (const el of els) {
@@ -96,7 +96,7 @@ function extractJobLocation(content: HTMLElement | null): string {
 	return '';
 }
 
-function extractDescription(content: HTMLElement | null): string {
+export function extractDescription(content: HTMLElement | null): string {
 	for (const sel of [
 		'[data-test="Description"]',
 		'[data-test="job-description"]',
@@ -116,7 +116,7 @@ function extractDescription(content: HTMLElement | null): string {
 	return '';
 }
 
-function extractFeatures(content: HTMLElement | null) {
+export function extractFeatures(content: HTMLElement | null) {
 	let budgetText = '';
 	let experienceLevel = '';
 	let projectType = '';
@@ -177,7 +177,7 @@ function extractFeatures(content: HTMLElement | null) {
 	return { budgetText, experienceLevel, projectType };
 }
 
-function extractSkills(content: HTMLElement | null): string[] | undefined {
+export function extractSkills(content: HTMLElement | null): string[] | undefined {
 	const badges = (content ?? document).querySelectorAll(
 		'.skills-list .air3-badge, .skills-list .badge, [data-test="skill"]'
 	);
@@ -199,7 +199,7 @@ function extractSkills(content: HTMLElement | null): string[] | undefined {
 	return parts.length > 0 ? [...new Set(parts)] : undefined;
 }
 
-function extractActivity(content: HTMLElement | null): Record<string, string> {
+export function extractActivity(content: HTMLElement | null): Record<string, string> {
 	const result: Record<string, string> = {};
 	const items = content?.querySelectorAll(
 		'.client-activity-items .ca-item, .client-activity-items li'
@@ -220,7 +220,7 @@ function extractActivity(content: HTMLElement | null): Record<string, string> {
 	return result;
 }
 
-function extractBidRange(content: HTMLElement | null): string {
+export function extractBidRange(content: HTMLElement | null): string {
 	const headings = content?.querySelectorAll('h5 strong, h5');
 	if (headings) {
 		for (const h of headings) {
@@ -232,7 +232,7 @@ function extractBidRange(content: HTMLElement | null): string {
 	return '';
 }
 
-function extractConnects(container: HTMLElement | null) {
+export function extractConnects(container: HTMLElement | null) {
 	let connectsRequired = '';
 	let connectsAvailable = '';
 	if (container) {
@@ -245,7 +245,7 @@ function extractConnects(container: HTMLElement | null) {
 	return { connectsRequired, connectsAvailable };
 }
 
-function extractClient(container: HTMLElement | null) {
+export function extractClient(container: HTMLElement | null) {
 	const aboutClient = container?.querySelector(
 		'[data-test="about-client-container"], .cfe-ui-job-about-client'
 	) as HTMLElement | null;
@@ -355,7 +355,7 @@ function extractClient(container: HTMLElement | null) {
 	};
 }
 
-function extractFromNuxtData(field: string): string {
+export function extractFromNuxtData(field: string): string {
 	try {
 		const script = document.querySelector('#__NUXT_DATA__');
 		if (!script?.textContent) return '';
