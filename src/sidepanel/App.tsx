@@ -23,6 +23,7 @@ export default function SidePanel() {
 	const [status, setStatus] = useState('Loading...');
 	const [errorDetails, setErrorDetails] = useState<ErrorDetails | null>(null);
 	const [busy, setBusy] = useState(false);
+	const [lastCopied, setLastCopied] = useState<'prompt' | 'short' | 'full' | null>(null);
 
 	const { copiedText, copyToClipboard } = useCopyText({
 		onSuccess: (text) => {
@@ -31,6 +32,7 @@ export default function SidePanel() {
 		onError: (msg) => {
 			setStatus(msg);
 		},
+		resetTimeOut: 2000,
 	});
 
 	useEffect(() => {
@@ -164,18 +166,22 @@ export default function SidePanel() {
 		if (!result) return;
 		const text = kind === 'short' ? result.proposalShort : result.proposalFull;
 
+		setLastCopied(kind);
 		await copyToClipboard(text, `Copied ${kind} proposal.`);
+		setTimeout(() => setLastCopied(null), 2000);
 	}
 
 	async function copyPrompt(): Promise<void> {
 		if (!settings?.mindset || !job) return;
 
-		const { instructions, input } = buildPrompt(settings?.mindset, job);
+		const { instructions, input } = buildPrompt(settings?.mindset, job, true);
 
+		setLastCopied('prompt');
 		await copyToClipboard(
 			instructions.concat('\n\n', input),
 			`Copied prompt to clipboard.`
 		);
+		setTimeout(() => setLastCopied(null), 2000);
 	}
 
 	function consumeError(response: Extract<BgResponse, { ok: false }>, context: string): void {
@@ -255,24 +261,30 @@ export default function SidePanel() {
 							}
 						}}
 					/>
-					<label htmlFor="rememberPass">Remember for this session</label>
+					<label htmlFor="rememberPass">Remember passphrase for this session</label>
 				</div>
 
 				<div className="side-row">
-					<button disabled={busy} onClick={() => void refreshJob()}>
+					<button disside-rowabled={busy} onClick={() => void refreshJob()}>
 						{busy ? 'Working...' : 'Refresh Job'}
 					</button>
 					<button disabled={busy || !job} onClick={() => void analyzeJob()}>
 						{busy ? 'Working...' : 'Analyze Job'}
 					</button>
 					<button disabled={busy || !job} onClick={() => void copyPrompt()}>
-						{copiedText ? 'Prompt Copied!' : 'Copy Prompt'}
+						{copiedText && lastCopied === 'prompt' ?
+							'Prompt Copied!'
+						:	'Copy Prompt'}
 					</button>
 					<button disabled={!result} onClick={() => void copyProposal('short')}>
-						{copiedText ? 'Proposal Copied!' : 'Copy Short Proposal'}
+						{copiedText && lastCopied === 'short' ?
+							'Proposal Copied!'
+						:	'Copy Short Proposal'}
 					</button>
 					<button disabled={!result} onClick={() => void copyProposal('full')}>
-						{copiedText ? 'Proposal Copied!' : 'Copy Full Proposal'}
+						{copiedText && lastCopied === 'full' ?
+							'Proposal Copied!'
+						:	'Copy Full Proposal'}
 					</button>
 				</div>
 

@@ -83,6 +83,7 @@ const DEFAULT_SETTINGS: ExtensionSettings = {
 		noGoSkills: [
 			'Figma UI/UX design',
 			'WordPress page builders',
+			'PHP, Laravel and any other non-JavaScript backend/frontend',
 			'Mobile app development (React Native, Flutter, etc.)',
 		],
 		proposalStyleRules: [
@@ -829,7 +830,10 @@ function extractJobFromPageDOM(): UpworkJob {
 	return {
 		url: location.href,
 		title,
-		description,
+		description:
+			description.startsWith('Summary') ?
+				description.replace('Summary\n', 'Job Description:\n')
+			:	`Job Description:\n\n${description}`,
 		postedDate: postedDate || undefined,
 		jobLocation: jobLocation || undefined,
 		budgetText: budgetText || undefined,

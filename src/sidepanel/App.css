@@ -121,6 +121,14 @@
 	filter: brightness(1.07);
 }
 
+/* 3D press effect for button */
+.slide-root button:focus:not(:disabled),
+.side-root button:active:not(:disabled) {
+	transform: translateY(1px);
+	box-shadow: 0 2px 6px rgba(19, 90, 255, 0.25);
+	filter: brightness(0.95);
+}
+
 .side-root button:disabled {
 	opacity: 0.45;
 	cursor: not-allowed;

@@ -20,7 +20,10 @@ export function extractUpworkJobFromDom(url: string): UpworkJob {
 	return {
 		url,
 		title,
-		description,
+		description:
+			description.startsWith('Summary') ?
+				description.replace('Summary', 'Job Description:')
+			:	`Job Description:\n\n${description}`,
 		postedDate: postedDate || undefined,
 		jobLocation: jobLocation || undefined,
 		budgetText: budgetText || undefined,
@@ -421,7 +424,7 @@ export function formatJobPreview(job: UpworkJob): string {
 		job.clientMemberSince ? `Member since: ${job.clientMemberSince}` : '',
 		'',
 		// Description (truncated)
-		truncateString(job.description, 2000),
+		truncateString(job.description, 3072),
 	];
 
 	// Collapse consecutive empty strings into one blank line
