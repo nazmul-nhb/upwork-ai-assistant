@@ -11,6 +11,7 @@ export default defineManifest({
 		16: 'public/icon.png',
 		32: 'public/icon.png',
 		48: 'public/icon.png',
+		64: 'public/icon.png',
 		128: 'public/icon.png',
 		256: 'public/icon.png',
 	},
