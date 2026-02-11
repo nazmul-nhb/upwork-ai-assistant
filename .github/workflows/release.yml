@@ -146,7 +146,7 @@ jobs:
             ### 📥 Installation
             1. Download the `.zip` file below
             2. Extract to a folder
-            3. Open `chrome://extensions` (Chrome) or `edge://extensions` (Edge) → Enable "Developer mode"
-            4. Click `Load unpacked → Select the extracted folder
+            3. Open `chrome://extensions` (Chrome) or `edge://extensions` (Edge) → **Enable** `Developer mode`
+            4. Click `Load unpacked` → Select the extracted folder
           files: |
             release/upwork-ai-assistant-${{ env.VERSION }}.zip
