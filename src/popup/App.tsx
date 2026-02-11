@@ -3,6 +3,8 @@ import './App.css';
 import type { BgRequest, BgResponse, ExtensionSettings, UpworkJob } from '@/shared/types';
 import { useEffect, useState } from 'react';
 
+const JOB_FOUND_MSG = 'Job detected on this page.';
+
 export default function PopUp() {
 	const [settings, setSettings] = useState<ExtensionSettings | null>(null);
 	const [job, setJob] = useState<UpworkJob | null>(null);
@@ -30,7 +32,7 @@ export default function PopUp() {
 
 			if (extractRes.ok && extractRes.type === 'ACTIVE_JOB' && extractRes.job) {
 				setJob(extractRes.job);
-				setStatus('Job detected on this page.');
+				setStatus(JOB_FOUND_MSG);
 				return;
 			}
 
@@ -84,10 +86,7 @@ export default function PopUp() {
 			</section>
 
 			<div className="popup-actions">
-				<button
-					disabled={status !== 'Job detected on this page.'}
-					onClick={openSidePanel}
-				>
+				<button disabled={status !== JOB_FOUND_MSG} onClick={openSidePanel}>
 					Job Actions
 				</button>
 				<button className="btn-secondary" onClick={openOptions}>

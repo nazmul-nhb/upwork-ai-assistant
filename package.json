@@ -2,7 +2,7 @@
   "name": "upwork-ai-assistant",
   "description": "Analyze Upwork jobs in-page and draft proposals using your preset skills & mindset.",
   "type": "module",
-  "version": "2.3.3",
+  "version": "2.3.4",
   "private": true,
   "scripts": {
     "dev": "vite",
