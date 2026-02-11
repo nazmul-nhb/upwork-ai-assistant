@@ -1,4 +1,6 @@
-export type LLMProvider = 'openai' | 'gemini' | 'grok';
+import type { LLM_PROVIDERS } from '@/shared/constants';
+
+export type LLMProvider = (typeof LLM_PROVIDERS)[number];
 
 export type UserMindset = {
 	profileName: string;

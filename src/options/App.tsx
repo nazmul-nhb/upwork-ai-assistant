@@ -1,3 +1,4 @@
+import { LLM_PROVIDERS } from '@/shared/constants';
 import './App.css';
 
 import type { BgRequest, BgResponse, ExtensionSettings, LLMProvider } from '@/shared/types';
@@ -5,8 +6,6 @@ import { clampNumber } from 'nhb-toolbox';
 import { COUNTRIES } from 'nhb-toolbox/constants';
 import { Cipher } from 'nhb-toolbox/hash';
 import { useEffect, useState } from 'react';
-
-const PROVIDERS: LLMProvider[] = ['openai', 'gemini', 'grok'];
 
 export default function Options() {
 	const [settings, setSettings] = useState<ExtensionSettings | null>(null);
@@ -16,11 +15,30 @@ export default function Options() {
 	const [keyStatus, setKeyStatus] = useState('');
 	const [settingsStatus, setSettingsStatus] = useState('');
 	const [connectionStatus, setConnectionStatus] = useState('');
+
 	const [busy, setBusy] = useState(false);
+
+	// Local state for text inputs to allow free typing
+	const [coreSkillsText, setCoreSkillsText] = useState('');
+	const [secondarySkillsText, setSecondarySkillsText] = useState('');
+	const [noGoSkillsText, setNoGoSkillsText] = useState('');
+	const [proposalRulesText, setProposalRulesText] = useState('');
+	const [redFlagsText, setRedFlagsText] = useState('');
 
 	useEffect(() => {
 		void loadSettingsFromBg();
 	}, []);
+
+	// Sync text fields when settings load or change
+	useEffect(() => {
+		if (settings?.mindset) {
+			setCoreSkillsText(settings.mindset.coreSkills.join(', '));
+			setSecondarySkillsText(settings.mindset.secondarySkills.join(', '));
+			setNoGoSkillsText(settings.mindset.noGoSkills.join(', '));
+			setProposalRulesText(settings.mindset.proposalStyleRules.join('\n'));
+			setRedFlagsText(settings.mindset.redFlags.join('\n'));
+		}
+	}, [settings?.mindset]);
 
 	const activeProvider = settings?.activeProvider ?? 'openai';
 	const providerConfig = settings?.providers[activeProvider];
@@ -35,6 +53,7 @@ export default function Options() {
 				setSettingsStatus(`Error: ${response.error}`);
 				return;
 			}
+
 			if (response.type !== 'SETTINGS') return;
 
 			setSettings(response.settings);
@@ -178,7 +197,7 @@ export default function Options() {
 							);
 						}}
 					>
-						{PROVIDERS.map((p) => (
+						{LLM_PROVIDERS.map((p) => (
 							<option key={p} value={p}>
 								{p}
 							</option>
@@ -392,13 +411,14 @@ export default function Options() {
 					Core skills (comma separated)
 					<textarea
 						rows={3}
-						value={settings.mindset.coreSkills.join(', ')}
-						onChange={(e) =>
+						value={coreSkillsText}
+						onChange={(e) => setCoreSkillsText(e.target.value)}
+						onBlur={() =>
 							setSettings({
 								...settings,
 								mindset: {
 									...settings.mindset,
-									coreSkills: splitComma(e.target.value),
+									coreSkills: splitComma(coreSkillsText),
 								},
 							})
 						}
@@ -408,14 +428,15 @@ export default function Options() {
 				<label>
 					Secondary skills (comma separated)
 					<textarea
-						rows={2}
-						value={settings.mindset.secondarySkills.join(', ')}
-						onChange={(e) =>
+						rows={3}
+						value={secondarySkillsText}
+						onChange={(e) => setSecondarySkillsText(e.target.value)}
+						onBlur={() =>
 							setSettings({
 								...settings,
 								mindset: {
 									...settings.mindset,
-									secondarySkills: splitComma(e.target.value),
+									secondarySkills: splitComma(secondarySkillsText),
 								},
 							})
 						}
@@ -425,14 +446,15 @@ export default function Options() {
 				<label>
 					No-go skills (comma separated)
 					<textarea
-						rows={2}
-						value={settings.mindset.noGoSkills.join(', ')}
-						onChange={(e) =>
+						rows={3}
+						value={noGoSkillsText}
+						onChange={(e) => setNoGoSkillsText(e.target.value)}
+						onBlur={() =>
 							setSettings({
 								...settings,
 								mindset: {
 									...settings.mindset,
-									noGoSkills: splitComma(e.target.value),
+									noGoSkills: splitComma(noGoSkillsText),
 								},
 							})
 						}
@@ -443,13 +465,14 @@ export default function Options() {
 					Proposal rules (one per line)
 					<textarea
 						rows={4}
-						value={settings.mindset.proposalStyleRules.join('\n')}
-						onChange={(e) =>
+						value={proposalRulesText}
+						onChange={(e) => setProposalRulesText(e.target.value)}
+						onBlur={() =>
 							setSettings({
 								...settings,
 								mindset: {
 									...settings.mindset,
-									proposalStyleRules: splitLines(e.target.value),
+									proposalStyleRules: splitLines(proposalRulesText),
 								},
 							})
 						}
@@ -460,13 +483,14 @@ export default function Options() {
 					Red flags (one per line)
 					<textarea
 						rows={4}
-						value={settings.mindset.redFlags.join('\n')}
-						onChange={(e) =>
+						value={redFlagsText}
+						onChange={(e) => setRedFlagsText(e.target.value)}
+						onBlur={() =>
 							setSettings({
 								...settings,
 								mindset: {
 									...settings.mindset,
-									redFlags: splitLines(e.target.value),
+									redFlags: splitLines(redFlagsText),
 								},
 							})
 						}
