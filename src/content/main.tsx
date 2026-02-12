@@ -1,3 +1,4 @@
+import { extractErrorMsg } from '@/shared/helpers';
 import type { ContentRequest, ContentResponse, ContentSnapshotMessage } from '@/shared/types';
 import { extractUpworkJobFromDom } from '@/shared/upwork';
 
@@ -21,7 +22,7 @@ chrome.runtime.onMessage.addListener((message: ContentRequest, _sender, sendResp
 		const job = extractUpworkJobFromDom(location.href);
 		sendResponse({ ok: true, job } satisfies ContentResponse);
 	} catch (error) {
-		const text = error instanceof Error ? error.message : 'Unable to extract job.';
+		const text = extractErrorMsg(error, 'Unable to extract job.');
 		sendResponse({ ok: false, error: text } satisfies ContentResponse);
 	}
 

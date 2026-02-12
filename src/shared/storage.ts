@@ -1,3 +1,4 @@
+import { LLM_PROVIDERS } from '@/shared/constants';
 import {
 	isArrayOfType,
 	isBoolean,
@@ -6,15 +7,15 @@ import {
 	isString,
 	isUndefined,
 } from 'nhb-toolbox';
-import type { ExtensionSettings, LLMProvider, ProviderConfig, UserMindset } from './types';
+import type { GenericObject } from 'nhb-toolbox/object/types';
+import type { ExtensionSettings, ProviderConfig, UserMindset } from './types';
 
 const KEY = 'UPWORK_AI_ASSISTANT_SETTINGS_V2';
-const PROVIDERS: LLMProvider[] = ['openai', 'gemini', 'grok'];
 
 export async function loadSettings(): Promise<ExtensionSettings | null> {
-	const data = await chrome.storage.local.get(KEY);
-	const raw = data[KEY];
-	return isSettings(raw) ? raw : null;
+	const data = await chrome.storage.local.get<{ [KEY]: GenericObject }>(KEY);
+	const settings = data[KEY];
+	return isSettings(settings) ? settings : null;
 }
 
 export async function saveSettings(settings: ExtensionSettings): Promise<void> {
@@ -53,12 +54,12 @@ function isSettings(value: unknown): value is ExtensionSettings {
 	if (!isObject(value)) return false;
 	const obj = value;
 
-	if (!PROVIDERS.includes(obj.activeProvider as LLMProvider)) return false;
+	if (!LLM_PROVIDERS.includes(obj.activeProvider)) return false;
 	if (!isBoolean(obj.rememberPassphrase)) return false;
 
 	const providers = obj.providers;
 	if (!isObject(providers)) return false;
-	for (const provider of PROVIDERS) {
+	for (const provider of LLM_PROVIDERS) {
 		if (!isProviderConfig(providers[provider])) return false;
 	}
 

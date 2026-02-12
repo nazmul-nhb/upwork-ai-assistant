@@ -1,3 +1,4 @@
+import { extractErrorMsg } from '@/shared/helpers';
 import './App.css';
 
 import { buildPrompt } from '@/shared/prompt';
@@ -88,7 +89,7 @@ export default function SidePanel() {
 				await refreshJob();
 			}
 		} catch (error) {
-			setStatus(error instanceof Error ? error.message : 'Initialization failed.');
+			setStatus(extractErrorMsg(error, 'Initialization failed.'));
 		} finally {
 			setBusy(false);
 		}
@@ -122,7 +123,7 @@ export default function SidePanel() {
 			throw new Error('Open an Upwork job details page, then click Refresh.');
 		} catch (error) {
 			setJob(null);
-			setStatus(error instanceof Error ? error.message : 'Failed to refresh job.');
+			setStatus(extractErrorMsg(error, 'Failed to refresh job.'));
 		} finally {
 			setBusy(false);
 		}
@@ -164,7 +165,7 @@ export default function SidePanel() {
 			}
 		} catch (error) {
 			setResult(null);
-			setStatus(error instanceof Error ? error.message : 'Analysis failed.');
+			setStatus(extractErrorMsg(error, 'Analysis failed.'));
 		} finally {
 			setBusy(false);
 		}

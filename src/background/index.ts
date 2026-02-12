@@ -1,3 +1,4 @@
+import { extractErrorMsg } from '@/shared/helpers';
 import { callLlmJson, LLMProviderError } from '@/shared/llm';
 import { buildPrompt } from '@/shared/prompt';
 import { loadSettings, saveSettings } from '@/shared/storage';
@@ -149,8 +150,7 @@ chrome.runtime.onMessage.addListener((msg: unknown, sender, sendResponse) => {
 				return;
 			}
 
-			const message =
-				error instanceof Error ? error.message : 'Unknown background error.';
+			const message = extractErrorMsg(error, 'Unknown background error.');
 			sendResponse({ ok: false, error: message } satisfies BgResponse);
 		});
 

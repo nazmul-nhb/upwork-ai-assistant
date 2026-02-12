@@ -14,7 +14,7 @@ import { useEffect, useState } from 'react';
  * @param joiner - The string used to join the array elements (default is `', '`).
  * @returns A tuple containing the current field value and a setter function to update it.
  */
-export function useMindSet(mindsetValue: Maybe<string[]>, joiner: string = ', ') {
+export function useMindSet(mindsetValue: Maybe<string[]>, joiner = ', ') {
 	const [fieldValue, setFieldValue] = useState('');
 
 	useEffect(() => {

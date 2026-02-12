@@ -1,3 +1,4 @@
+import { extractErrorMsg } from '@/shared/helpers';
 import './App.css';
 
 import type { BgRequest, BgResponse, ExtensionSettings, UpworkJob } from '@/shared/types';
@@ -43,7 +44,7 @@ export default function PopUp() {
 				setStatus('No Upwork job page detected.');
 			}
 		} catch (error) {
-			setStatus(error instanceof Error ? error.message : 'Initialization failed.');
+			setStatus(extractErrorMsg(error, 'Initialization failed.'));
 		}
 	}
 

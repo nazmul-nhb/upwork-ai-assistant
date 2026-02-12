@@ -2,6 +2,7 @@ import './App.css';
 
 import { useMindSet } from '@/hooks/useMindSet';
 import { LLM_PROVIDERS } from '@/shared/constants';
+import { extractErrorMsg } from '@/shared/helpers';
 import type { BgRequest, BgResponse, ExtensionSettings, LLMProvider } from '@/shared/types';
 import { clampNumber } from 'nhb-toolbox';
 import { COUNTRIES } from 'nhb-toolbox/constants';
@@ -22,9 +23,9 @@ export default function Options() {
 	const mindset = useMemo(() => settings?.mindset, [settings]);
 
 	// Local state for text inputs to allow free typing
-	const [coreSkillsStr, setCoreSkillsStr] = useMindSet(mindset?.coreSkills, ', ');
+	const [coreSkillsStr, setCoreSkillsStr] = useMindSet(mindset?.coreSkills);
 	const [secondarySkillsStr, setSecondarySkillsStr] = useMindSet(mindset?.secondarySkills);
-	const [noGoSkillsStr, setNoGoSkillsStr] = useMindSet(mindset?.noGoSkills, ', ');
+	const [noGoSkillsStr, setNoGoSkillsStr] = useMindSet(mindset?.noGoSkills);
 	const [proposalRules, setProposalRules] = useMindSet(mindset?.proposalStyleRules, '\n');
 	const [redFlagsStr, setRedFlagsStr] = useMindSet(mindset?.redFlags, '\n');
 
@@ -56,9 +57,7 @@ export default function Options() {
 				:	'No encrypted API key saved yet.'
 			);
 		} catch (error) {
-			setSettingsStatus(
-				error instanceof Error ? error.message : 'Failed to load settings.'
-			);
+			setSettingsStatus(extractErrorMsg(error, 'Failed to load settings.'));
 		}
 	}
 
@@ -114,7 +113,7 @@ export default function Options() {
 			setApiKey('');
 			setKeyStatus('Encrypted API key saved.');
 		} catch (error) {
-			setKeyStatus(error instanceof Error ? error.message : 'Encryption failed.');
+			setKeyStatus(extractErrorMsg(error, 'Encryption failed.'));
 		} finally {
 			setBusy(false);
 		}
@@ -155,9 +154,7 @@ export default function Options() {
 				setConnectionStatus(response.message);
 			}
 		} catch (error) {
-			setConnectionStatus(
-				error instanceof Error ? error.message : 'Connection test failed.'
-			);
+			setConnectionStatus(extractErrorMsg(error, 'Connection test failed.'));
 		} finally {
 			setBusy(false);
 		}
